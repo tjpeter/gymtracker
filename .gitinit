@@ -1,0 +1,84 @@
+# macOS
+.DS_Store
+
+# input folder
+input/
+
+# Xcode user-specific files
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Xcode build products
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+# Keep Package.resolved only for apps if you want reproducible builds.
+# Remove the line above if you want to commit it.
+
+# App packages
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playground
+timeline.xctimeline
+playground.xcworkspace
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Mint
+.mint/
+
+# Bundler
+.bundle/
+
+# Firebase / Google service configs
+# Uncomment only if you do NOT want them in git
+# GoogleService-Info.plist
+
+# Secrets / local config
+.env
+.env.*
+*.secret
+Secrets.plist
+Config.local.xcconfig
+
+# Temporary files
+*.swp
+*.tmp
+*.log
+
+# Archives
+*.xcarchive
+
+# Cursor / VS Code / other editors
+.vscode/
+.idea/
+
+# Claude Code / local AI tooling artifacts
+.claude/
