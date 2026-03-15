@@ -74,10 +74,35 @@ struct StartWorkoutView: View {
                     // Custom gym name input + previously used names
                     if viewModel.isCustomGym {
                         let customNames = viewModel.allUsedGymNames()
+                        let fuzzyMatches = customNames.filter {
+                            !viewModel.customGymName.isEmpty &&
+                            $0.localizedCaseInsensitiveContains(viewModel.customGymName) &&
+                            $0 != viewModel.customGymName
+                        }
 
                         TextField("Enter gym name", text: $viewModel.customGymName)
                             .textFieldStyle(.roundedBorder)
                             .padding(.top, 4)
+                            .autocorrectionDisabled()
+
+                        // Fuzzy match suggestions
+                        if !fuzzyMatches.isEmpty {
+                            ForEach(fuzzyMatches, id: \.self) { match in
+                                Button {
+                                    viewModel.customGymName = match
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "magnifyingglass")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text("Did you mean: **\(match)**?")
+                                            .font(.caption)
+                                            .foregroundStyle(.primary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
 
                         if !customNames.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {

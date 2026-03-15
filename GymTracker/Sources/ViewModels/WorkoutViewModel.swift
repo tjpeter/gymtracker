@@ -14,7 +14,8 @@ final class WorkoutViewModel {
     private var modelContext: ModelContext?
 
     var effectiveGymName: String {
-        isCustomGym ? customGymName : selectedGymName
+        let name = isCustomGym ? customGymName : selectedGymName
+        return name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func setModelContext(_ context: ModelContext) {
