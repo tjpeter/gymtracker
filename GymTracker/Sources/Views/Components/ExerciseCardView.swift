@@ -339,8 +339,16 @@ struct SetRowView: View {
         .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(set.isCompleted ? Color.green.opacity(0.08) : Color.clear)
+                .fill(set.isWarmup ? Color.orange.opacity(0.06) : (set.isCompleted ? Color.green.opacity(0.08) : Color.clear))
         )
-        .opacity(set.isWarmup ? 0.7 : 1.0)
+        .overlay(alignment: .leading) {
+            if set.isWarmup {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.orange)
+                    .frame(width: 3)
+                    .padding(.vertical, 2)
+            }
+        }
+        .opacity(set.isWarmup ? 0.85 : 1.0)
     }
 }
