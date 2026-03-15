@@ -301,6 +301,12 @@ struct SetRowView: View {
             .buttonStyle(.borderless)
             .frame(width: 30)
         }
+        .padding(.vertical, 2)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(set.isCompleted ? Color.green.opacity(0.08) : Color.clear)
+        )
         .opacity(set.isWarmup ? 0.7 : 1.0)
     }
 }
