@@ -56,7 +56,7 @@ struct ExerciseCardView: View {
 
                 // Sets header
                 HStack {
-                    Text("Set")
+                    Text("#")
                         .frame(width: 36)
                     Spacer()
                     Text("Weight (kg)")
@@ -144,10 +144,17 @@ struct SetRowView: View {
 
     var body: some View {
         HStack {
-            Text("\(set.setNumber)")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
-                .frame(width: 36)
+            // Set number with warmup indicator
+            Button {
+                set.isWarmup.toggle()
+                viewModel.autosave()
+            } label: {
+                Text(set.isWarmup ? "W" : "\(set.setNumber)")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(set.isWarmup ? .orange : .secondary)
+                    .frame(width: 36)
+            }
+            .buttonStyle(.plain)
 
             Spacer()
 
@@ -213,5 +220,6 @@ struct SetRowView: View {
             }
             .frame(width: 70)
         }
+        .opacity(set.isWarmup ? 0.7 : 1.0)
     }
 }
