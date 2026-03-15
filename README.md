@@ -11,7 +11,10 @@ A simple, native iOS app for logging gym workouts and tracking progress. Built w
 - **Smart auto-fill** — full set scheme (warmups, working sets, drop sets) copied from last session; "Previous" badge shows your top weight
 - **Autosave** — every weight/rep change saved immediately; resume after app crash or close
 - **Template persistence** — renaming/removing exercises updates the template for that gym+workout
-- **In-session editing** — add/remove exercises, rename (long-press or double-tap), adjust weights with +/- buttons
+- **In-session editing** — add/remove exercises and sets, rename (long-press or double-tap), adjust weights with +/- buttons
+- **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange
+- **Set completion tracking** — mark individual sets as done with a checkmark toggle; done status is distinct from prefilled values
+- **Collapsible exercises** — collapse/expand individual exercise set groups, or toggle all at once with the global collapse button
 - **Exercise autocomplete** — when adding exercises mid-session, suggestions from your workout history appear
 - **Quick-apply previous values** — tap the "Previous" badge to apply last session's top weight to all sets
 - **Workout history** — filterable by gym and workout type, with swipe-to-delete and session duration
@@ -92,9 +95,20 @@ Selecting "Other" in the gym picker lets you type a custom name. Previously used
 ### Rest Timer
 During a workout, use the rest timer section to time rest between sets. Choose a preset (60s, 90s, 120s) or set a custom duration. The timer provides haptic feedback when complete and sends a notification if the app is in the background.
 
+### Set Management
+Add or remove sets from any exercise during a session. Tap the set number to toggle warmup status. Use the checkmark to mark sets as done — this is explicit and independent of prefilled weight/rep values.
+
+### Collapsible Exercises
+Each exercise's set group can be collapsed or expanded individually. Use the collapse/expand button in the exercises section header to toggle all exercises at once.
+
+### Keyboard Dismissal
+Swipe down on any scrollable screen to dismiss the keyboard while editing weights, reps, notes, or other text fields.
+
 ### Data Export
 In the History screen, tap the share icon in the toolbar to export all workout and body weight data as CSV or JSON. The native iOS share sheet lets you save to Files, AirDrop, email, or any other sharing target.
 
+### Data Compatibility
+New properties (warmup status, completion tracking) use safe defaults so existing saved workouts continue to load without issues. Workout history is preserved across updates.
 
 ## Imported Workout History
 
