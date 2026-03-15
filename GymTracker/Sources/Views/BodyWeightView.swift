@@ -30,12 +30,26 @@ struct BodyWeightView: View {
                     let minW = (weights.min() ?? 0) - 1
                     let maxW = (weights.max() ?? 100) + 1
                     Chart(sorted) { entry in
+                        AreaMark(
+                            x: .value("Date", entry.date),
+                            y: .value("Weight", entry.weight)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.orange.opacity(0.2), .orange.opacity(0.02)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+
                         LineMark(
                             x: .value("Date", entry.date),
                             y: .value("Weight", entry.weight)
                         )
                         .interpolationMethod(.catmullRom)
                         .foregroundStyle(.orange)
+                        .lineStyle(StrokeStyle(lineWidth: 2.5))
 
                         PointMark(
                             x: .value("Date", entry.date),

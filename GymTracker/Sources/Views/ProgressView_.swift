@@ -199,20 +199,36 @@ struct ExerciseProgressChart: View {
     var showVolume = false
 
     var body: some View {
+        let chartColor: Color = showVolume ? .orange : .blue
         Chart(dataPoints) { point in
             let yValue = showVolume ? point.volume : point.maxWeight
+
+            AreaMark(
+                x: .value("Date", point.date),
+                y: .value(showVolume ? "Volume" : "Weight", yValue)
+            )
+            .interpolationMethod(.catmullRom)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [chartColor.opacity(0.2), chartColor.opacity(0.02)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
             LineMark(
                 x: .value("Date", point.date),
                 y: .value(showVolume ? "Volume" : "Weight", yValue)
             )
             .interpolationMethod(.catmullRom)
-            .foregroundStyle(showVolume ? .orange : .blue)
+            .foregroundStyle(chartColor)
+            .lineStyle(StrokeStyle(lineWidth: 2.5))
 
             PointMark(
                 x: .value("Date", point.date),
                 y: .value(showVolume ? "Volume" : "Weight", yValue)
             )
-            .foregroundStyle(showVolume ? .orange : .blue)
+            .foregroundStyle(chartColor)
         }
         .chartYAxisLabel(showVolume ? "kg total" : "kg")
     }
