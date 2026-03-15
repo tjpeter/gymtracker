@@ -159,12 +159,15 @@ final class WorkoutViewModel {
     }
 
     func addSetToExercise(_ exercise: LoggedExercise) {
+        guard let context = modelContext else { return }
         let lastSet = exercise.sortedSets.last
         let newSet = ExerciseSet(
             setNumber: exercise.sets.count + 1,
             reps: lastSet?.reps ?? 10,
             weight: lastSet?.weight ?? 0
         )
+        context.insert(newSet)
+        newSet.exercise = exercise
         exercise.sets.append(newSet)
         autosave()
     }
