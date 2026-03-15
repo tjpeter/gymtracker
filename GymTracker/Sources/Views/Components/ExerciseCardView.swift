@@ -139,16 +139,20 @@ struct ExerciseCardView: View {
                         .foregroundStyle(.yellow)
                 }
                 Spacer()
+                let completedCount = exercise.sets.filter(\.isCompleted).count
+                let totalCount = exercise.sets.count
                 let warmupCount = exercise.sets.filter(\.isWarmup).count
-                let workingCount = exercise.sets.count - warmupCount
-                if warmupCount > 0 {
-                    Text("\(workingCount) sets + \(warmupCount)W")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("\(exercise.sets.count) sets")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                let workingCount = totalCount - warmupCount
+                HStack(spacing: 4) {
+                    Text("\(completedCount)/\(totalCount)")
+                        .font(.caption.bold())
+                        .monospacedDigit()
+                        .foregroundStyle(completedCount == totalCount && totalCount > 0 ? .green : .orange)
+                    if warmupCount > 0 {
+                        Text("(\(workingCount)+\(warmupCount)W)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
