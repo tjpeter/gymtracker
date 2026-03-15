@@ -11,6 +11,7 @@ struct ProgressView_: View {
     @State private var selectedExercise: String?
     @State private var selectedGym: String?
     @State private var showVolume = false
+    @State private var exerciseSearch = ""
 
     var filteredSessions: [WorkoutSession] {
         guard let gym = selectedGym else { return sessions }
@@ -76,10 +77,27 @@ struct ProgressView_: View {
                     Text("Complete workouts to track progress")
                         .foregroundStyle(.secondary)
                 } else {
-                    Picker("Exercise", selection: $selectedExercise) {
-                        Text("Select an exercise").tag(nil as String?)
-                        ForEach(allExerciseNames, id: \.self) { name in
-                            Text(name).tag(name as String?)
+                    TextField("Search exercises", text: $exerciseSearch)
+                        .textFieldStyle(.roundedBorder)
+
+                    let filtered = exerciseSearch.isEmpty
+                        ? allExerciseNames
+                        : allExerciseNames.filter { $0.localizedCaseInsensitiveContains(exerciseSearch) }
+                    ForEach(filtered, id: \.self) { name in
+                        Button {
+                            selectedExercise = name
+                            exerciseSearch = ""
+                        } label: {
+                            HStack {
+                                Text(name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedExercise == name {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                        .font(.caption)
+                                }
+                            }
                         }
                     }
                 }
