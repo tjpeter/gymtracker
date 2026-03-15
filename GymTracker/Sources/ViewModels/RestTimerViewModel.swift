@@ -38,6 +38,7 @@ final class RestTimerViewModel {
         isRunning = true
         endDate = Date().addingTimeInterval(TimeInterval(seconds))
 
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         scheduleNotification(seconds: seconds)
 
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in

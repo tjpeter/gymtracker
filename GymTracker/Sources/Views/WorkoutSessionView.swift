@@ -138,6 +138,7 @@ struct WorkoutSessionView: View {
             Button("Complete", role: .none) {
                 restTimer.stop()
                 viewModel.completeWorkout()
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}
