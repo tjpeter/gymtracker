@@ -98,6 +98,7 @@ struct RestTimerView: View {
                         .background(Capsule().fill(Theme.Colors.buttonBackground))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Add 30 seconds to timer")
 
                 Button {
                     timer.stop()
@@ -110,6 +111,7 @@ struct RestTimerView: View {
                         .background(Capsule().fill(Color.red.opacity(0.12)))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Stop rest timer")
             }
         }
     }
@@ -139,6 +141,7 @@ struct RestTimerView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Toggle auto-start rest timer, currently \(timer.autoStartEnabled ? "on" : "off")")
             }
 
             HStack(spacing: 10) {
@@ -156,6 +159,7 @@ struct RestTimerView: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Start \(preset.seconds) second rest timer")
                 }
 
                 Button {
@@ -209,6 +213,7 @@ struct RestTimerView: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Show rest timer")
             .padding(.trailing, 16)
             .padding(.bottom, 4)
         }

@@ -60,6 +60,12 @@ struct HomeView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel({
+                            if let session = workoutVM.currentSession {
+                                return "Resume workout at \(session.gymName), \(session.workoutType.displayName)"
+                            }
+                            return "Resume workout"
+                        }())
                     }
 
                     // Hero card - Start Workout
@@ -96,6 +102,7 @@ struct HomeView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Start new workout")
 
                     // Stats row
                     if totalWorkouts > 0 {
@@ -229,6 +236,8 @@ struct StatCard: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(color.opacity(0.15), lineWidth: 1)
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title): \(value)")
     }
 }
 

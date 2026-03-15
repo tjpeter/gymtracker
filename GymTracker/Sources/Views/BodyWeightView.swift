@@ -107,6 +107,13 @@ struct BodyWeightView: View {
                                 .font(.subheadline.bold())
                                 .monospacedDigit()
                         }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel({
+                            let formatter = DateFormatter()
+                            formatter.dateStyle = .long
+                            formatter.timeStyle = .none
+                            return "Weight \(entry.weight.formattedWeight) kg on \(formatter.string(from: entry.date))"
+                        }())
                     }
                     .onDelete(perform: deleteEntries)
                 }
