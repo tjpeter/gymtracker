@@ -157,6 +157,12 @@ struct ExerciseCardView: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
+            Button {
+                isEditingName = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+            .tint(.blue)
         }
         .onChange(of: globalExpandState) { _, newValue in
             if let newValue {
