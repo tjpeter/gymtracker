@@ -184,7 +184,13 @@ struct ExerciseCardView: View {
         }
         .alert("Delete Exercise?", isPresented: $showDeleteExerciseAlert) {
             Button("Delete", role: .destructive) {
+                let name = exercise.name
                 viewModel.removeExercise(exercise)
+                NotificationCenter.default.post(
+                    name: .exerciseDeleted,
+                    object: nil,
+                    userInfo: ["name": name]
+                )
             }
             Button("Cancel", role: .cancel) {}
         } message: {

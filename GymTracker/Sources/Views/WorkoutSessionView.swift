@@ -12,6 +12,7 @@ struct WorkoutSessionView: View {
     @State private var allExpanded = true
     @State private var globalExpandState: Bool? = nil
     @State private var completionSummary: WorkoutSummaryData? = nil
+    @State private var undoBannerText: String? = nil
 
     var body: some View {
         Group {
@@ -112,6 +113,23 @@ struct WorkoutSessionView: View {
                 ContentUnavailableView("No Active Workout", systemImage: "figure.walk", description: Text("Start a workout from the home screen"))
             }
         }
+        .overlay(alignment: .top) {
+            if let text = undoBannerText {
+                HStack {
+                    Image(systemName: "trash")
+                        .font(.caption)
+                    Text(text)
+                        .font(.subheadline)
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.red.opacity(0.85)))
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .navigationTitle("Workout")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(viewModel.isWorkoutActive)
@@ -175,6 +193,18 @@ struct WorkoutSessionView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .setCompleted)) { _ in
             restTimer.autoStart()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .exerciseDeleted)) { notification in
+            if let name = notification.userInfo?["name"] as? String {
+                withAnimation(.spring(duration: 0.3)) {
+                    undoBannerText = "\(name) deleted"
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                    withAnimation {
+                        undoBannerText = nil
+                    }
+                }
+            }
         }
         .onChange(of: restTimer.isRunning) { _, running in
             if running {
