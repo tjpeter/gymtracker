@@ -27,6 +27,7 @@
 		E32E49AB8FC0423A4A459ADF /* BodyWeightEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FAE41F469D6BD0447ECACCA /* BodyWeightEntry.swift */; };
 		EB4DFFA456D3F25C29096758 /* WorkoutSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB80E678C11109871E35042 /* WorkoutSummaryView.swift */; };
 		EFAD60CB4DECC9657A96E7F5 /* WorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925DDDB8504C22B7403F53FA /* WorkoutSessionView.swift */; };
+		F343437DAC9C747A6BE5F186 /* Notification+Names.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D00FCEF1F33C1CE7955888 /* Notification+Names.swift */; };
 		FC046E5147D7B8445F01155D /* GymTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9B185EE387C9F27547D06A /* GymTrackerApp.swift */; };
 		FC65F569F52874FDEDF64E44 /* WorkoutDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512982C44E251FF1AAE08154 /* WorkoutDetailView.swift */; };
 /* End PBXBuildFile section */
@@ -38,6 +39,7 @@
 		2D24008BD7724B953DF45C60 /* ExerciseCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCardView.swift; sourceTree = "<group>"; };
 		2FAE41F469D6BD0447ECACCA /* BodyWeightEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyWeightEntry.swift; sourceTree = "<group>"; };
 		3C9B185EE387C9F27547D06A /* GymTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymTrackerApp.swift; sourceTree = "<group>"; };
+		42D00FCEF1F33C1CE7955888 /* Notification+Names.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+Names.swift"; sourceTree = "<group>"; };
 		512982C44E251FF1AAE08154 /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		58FC302A8DE68AD81A6D8D37 /* BodyWeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyWeightView.swift; sourceTree = "<group>"; };
 		5C7A08468501C117D87D1624 /* ExerciseSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseSet.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				2B80DBA692F584940F3C258D /* Double+Format.swift */,
+				42D00FCEF1F33C1CE7955888 /* Notification+Names.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -222,6 +225,7 @@
 				656CB93681FCB8E43B0A9465 /* HistoryView.swift in Sources */,
 				7285DA4680CE8E230B57AB49 /* HomeView.swift in Sources */,
 				624BD0AE5AA7DF18622E6F3A /* LoggedExercise.swift in Sources */,
+				F343437DAC9C747A6BE5F186 /* Notification+Names.swift in Sources */,
 				36B73594EBB7FE33D7F14FBC /* ProgressView_.swift in Sources */,
 				B1A6DD6E8598F66CB2DD9CDD /* RestTimerView.swift in Sources */,
 				B4B1D86A2AEEAA9E50D912B2 /* RestTimerViewModel.swift in Sources */,

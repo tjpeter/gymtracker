@@ -7,6 +7,8 @@ final class RestTimerViewModel {
     var remainingSeconds: Int = 0
     var totalSeconds: Int = 0
     var isRunning: Bool = false
+    var autoStartEnabled: Bool = false
+    var lastUsedDuration: Int = 90
 
     static let presets: [(label: String, seconds: Int)] = [
         ("60s", 60),
@@ -31,8 +33,14 @@ final class RestTimerViewModel {
         return "\(secs)s"
     }
 
+    func autoStart() {
+        guard autoStartEnabled, !isRunning else { return }
+        start(seconds: lastUsedDuration)
+    }
+
     func start(seconds: Int) {
         stop()
+        lastUsedDuration = seconds
         totalSeconds = seconds
         remainingSeconds = seconds
         isRunning = true

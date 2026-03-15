@@ -326,6 +326,9 @@ struct SetRowView: View {
                 set.isCompleted.toggle()
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 viewModel.autosave()
+                if set.isCompleted {
+                    NotificationCenter.default.post(name: .setCompleted, object: nil)
+                }
             } label: {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))

@@ -173,6 +173,9 @@ struct WorkoutSessionView: View {
         .onAppear {
             RestTimerViewModel.requestNotificationPermission()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .setCompleted)) { _ in
+            restTimer.autoStart()
+        }
         .onChange(of: restTimer.isRunning) { _, running in
             if running {
                 withAnimation(.spring(duration: 0.3)) {

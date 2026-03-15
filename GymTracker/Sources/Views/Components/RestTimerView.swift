@@ -116,9 +116,30 @@ struct RestTimerView: View {
 
     private var presetButtons: some View {
         VStack(spacing: 8) {
-            Text("Rest Timer")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
+            HStack {
+                Text("Rest Timer")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    timer.autoStartEnabled.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: timer.autoStartEnabled ? "bolt.fill" : "bolt.slash")
+                            .font(.caption2)
+                        Text("Auto")
+                            .font(.caption2.bold())
+                    }
+                    .foregroundStyle(timer.autoStartEnabled ? .orange : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(timer.autoStartEnabled ? Color.orange.opacity(0.15) : Color(.systemGray5))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
 
             HStack(spacing: 10) {
                 ForEach(RestTimerViewModel.presets, id: \.seconds) { preset in
