@@ -300,6 +300,8 @@ Also:
 - Remove set deletes the last set (minimum one set per exercise); requires confirmation
 - Deleting an exercise requires confirmation
 - Applying previous values requires confirmation to prevent accidental overwrites
+- Exercise renaming discoverable via swipe action, double-tap, or long-press context menu
+- Weight +/- buttons use 44pt minimum touch targets per Apple HIG
 - Exercise notes autosave on change and are displayed in the workout history detail view
 
 ### Warmup sets
@@ -346,6 +348,15 @@ Also:
 ### Body weight chart
 - Y-axis auto-scales to data range (min-1 to max+1) for visible trends
 
+### Copy from previous workout
+- "Copy from..." button in StartWorkoutView lets users pick any previous session as starting point
+- Default auto-fill from matching gym+workout combo remains the primary flow
+- Supports cross-gym copying (e.g., copy Kreuzlingen workout to use at a new gym)
+
+### Accessibility
+- VoiceOver labels on all set row controls (warmup toggle, weight/reps buttons, completion checkmark)
+- All interactive buttons use `.borderless` style for consistent tap handling
+
 ### Home screen
 - Weekly streak counter (consecutive weeks with at least one workout)
 
@@ -357,9 +368,8 @@ Also:
 
 ## Nice-to-have features
 Only add these if they do not complicate the app too much:
-- duplicate previous workout (copy from any session, including cross-gym)
 - mark favorite exercises
-- accessibility improvements (VoiceOver labels, Dynamic Type support)
+- Dynamic Type support
 
 ## Important constraints
 - Keep the app focused and usable

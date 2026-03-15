@@ -11,12 +11,13 @@ A simple, native iOS app for logging gym workouts and tracking progress. Built w
 - **Smart auto-fill** — full set scheme (warmups, working sets, drop sets) copied from last session including warmup status; "Previous" badge shows your top weight; per-set placeholder text shows last session's values
 - **Autosave** — every weight/rep change saved immediately; resume after app crash or close
 - **Template persistence** — renaming/removing exercises updates the template for that gym+workout
-- **In-session editing** — add/remove exercises and sets (with confirmation), rename (long-press or double-tap), adjust weights with +/- buttons
+- **In-session editing** — add/remove exercises and sets (with confirmation), rename (swipe, long-press, or double-tap), adjust weights with large +/- buttons (44pt touch targets)
 - **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange; working sets renumber consecutively; exercise header shows "3 sets + 2W" breakdown; warmup status carried forward to new sessions
 - **Set completion tracking** — mark individual sets as done with a checkmark toggle and haptic feedback; completed sets highlighted with green tint; done status preserved accurately on workout completion
 - **Collapsible exercises** — collapse/expand individual exercise set groups, or toggle all at once with the global collapse button
 - **Exercise autocomplete** — when adding exercises mid-session, suggestions from your workout history appear
 - **Quick-apply previous values** — tap the "Previous" badge to apply last session's top weight to all sets (with confirmation)
+- **Copy from previous workout** — optionally start a new workout by copying exercises from any previous session, including cross-gym
 - **Workout history** — filterable by gym and workout type, with swipe-to-delete and session duration
 - **Progress tracking** — weight progression and volume charts per exercise (toggle between views), filterable by gym, searchable exercise list, workout frequency, PR indicators
 - **Body weight tracking** — log weight, view trends over time with auto-scaled chart
@@ -101,6 +102,9 @@ Add or remove sets from any exercise during a session. Removing a set, deleting 
 ### PR Indicators
 A trophy icon appears next to the exercise name during a workout when any working set weight exceeds your previous session's best weight, giving immediate feedback on personal records.
 
+### Copy From Previous Workout
+When starting a new workout, the default auto-fill uses your last matching session (same gym + workout type). Optionally, tap "Copy from..." to pick any previous session as the starting point — useful when training at a new gym or wanting to base exercises on a different location's setup. The selected source is shown as a badge that can be cleared before starting.
+
 ### Collapsible Exercises
 Each exercise's set group can be collapsed or expanded individually. Use the collapse/expand button in the exercises section header to toggle all exercises at once.
 
@@ -122,6 +126,5 @@ Historical sessions were parsed from handwritten notebook images and imported as
 - iCloud sync (requires paid Apple Developer account)
 - Apple Watch companion
 - Apple Health integration
-- Workout duplication (copy a previous session as starting point, including cross-gym)
 - Favorite exercises
-- Accessibility improvements (VoiceOver labels, Dynamic Type)
+- Dynamic Type support
