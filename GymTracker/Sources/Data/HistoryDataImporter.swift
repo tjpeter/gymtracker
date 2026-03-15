@@ -1,21 +1,8 @@
 import Foundation
 import SwiftData
 
-/// Imports historical workout data parsed from handwritten notebook images and text files.
-///
-/// Source material:
-/// - IMG_2497.HEIC: Sessions from 14.2.2026 (Kreuzlingen), 16.2.2026 (Wädenswil), 18.2.2026 (Kreuzlingen)
-/// - IMG_2498.HEIC: Sessions from 23.2.2026 (Wädenswil partial), 24.2.2026 (Kreuzlingen), 28.2.2026 (Davos)
-/// - IMG_2499.HEIC: Sessions from 2.3.2026 (Wädenswil), 6.3.2026 (Kreuzlingen)
-/// - "workout 23.2(Wädenswil)": Text file with Workout B at Wädenswil on 23.2.2026
-///
-/// Assumptions:
-/// - Dates are in 2026 (DD.MM.YYYY format visible in images)
-/// - Workout type (A/B) inferred from exercise selection matching the program
-/// - Weights read as best-effort from handwritten notes; some values are approximate
-/// - "XLingen" = Kreuzlingen
-/// - Warmup sets (marked with lower weights) are excluded; only working sets imported
-/// - Where reps are unclear, the prescribed rep range midpoint is used
+/// Imports historical workout data as seed data for the app.
+/// Provides sample sessions across multiple gyms and workout types.
 struct HistoryDataImporter {
 
     static func importIfNeeded(context: ModelContext) {
@@ -144,7 +131,7 @@ struct HistoryDataImporter {
             ]
         ))
 
-        // Session 7: Mon 2.3.2026 - Wädenswil - Workout A (body weight: 80 kg)
+        // Session 7: Mon 2.3.2026 - Wädenswil - Workout A
         sessions.append(buildSession(
             date: makeDate(day: 2, month: 3, year: 2026),
             gymName: "Wädenswil",
