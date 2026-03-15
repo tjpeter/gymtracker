@@ -54,17 +54,14 @@ struct ExerciseCardView: View {
                 }
 
                 // Sets header
-                HStack {
+                HStack(spacing: 8) {
                     Text("#")
-                        .frame(width: 36)
+                        .frame(width: 28, alignment: .center)
+                    Text("Weight")
                     Spacer()
-                    Text("Weight (kg)")
-                        .frame(width: 110)
                     Text("Reps")
-                        .frame(width: 70)
                     Image(systemName: "checkmark")
-                        .font(.caption2.bold())
-                        .frame(width: 30)
+                        .frame(width: 44)
                 }
                 .font(.caption2.bold())
                 .foregroundStyle(.secondary)
@@ -234,7 +231,7 @@ struct SetRowView: View {
     @State private var checkmarkScale: CGFloat = 1.0
 
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             // Set number with warmup indicator
             Button {
                 set.isWarmup.toggle()
@@ -243,22 +240,20 @@ struct SetRowView: View {
                 Text(set.isWarmup ? "W" : "\(workingSetNumber)")
                     .font(.subheadline.bold())
                     .foregroundStyle(set.isWarmup ? .orange : .secondary)
-                    .frame(width: 36)
+                    .frame(width: 28)
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(set.isWarmup ? "Warmup set, tap to make working set" : "Set \(workingSetNumber), tap to mark as warmup")
 
-            Spacer()
-
             // Weight input with +/- buttons
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Button {
                     set.weight = max(0, set.weight - 2.5)
                     viewModel.autosave()
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
-                        .font(.title3)
+                        .font(.title2)
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -268,9 +263,10 @@ struct SetRowView: View {
                 TextField(previousWeight.map { $0.formattedWeight } ?? "0", value: $set.weight, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
+                    .font(.body.bold())
                     .monospacedDigit()
-                    .frame(width: 50)
-                    .padding(.vertical, 6)
+                    .frame(width: 60)
+                    .padding(.vertical, 8)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
                     .accessibilityLabel("Weight, \(set.weight.formattedWeight) kg")
 
@@ -280,7 +276,7 @@ struct SetRowView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
-                        .font(.title3)
+                        .font(.title2)
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -288,15 +284,23 @@ struct SetRowView: View {
                 .accessibilityLabel("Increase weight by 2.5 kg")
             }
 
+            Text("kg")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
             // Reps input
-            HStack(spacing: 4) {
+            HStack(spacing: 2) {
                 Button {
                     set.reps = max(0, set.reps - 1)
                     viewModel.autosave()
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .font(.body)
+                        .frame(minWidth: 36, minHeight: 36)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Decrease reps")
@@ -305,7 +309,7 @@ struct SetRowView: View {
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
                     .monospacedDigit()
-                    .frame(width: 32)
+                    .frame(width: 36)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
                     .accessibilityLabel("Reps, \(set.reps)")
@@ -316,12 +320,13 @@ struct SetRowView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
-                        .font(.caption)
+                        .font(.body)
+                        .frame(minWidth: 36, minHeight: 36)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Increase reps")
             }
-            .frame(width: 70)
 
             // Done toggle
             Button {
@@ -342,14 +347,15 @@ struct SetRowView: View {
             } label: {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))
-                    .font(.title3)
+                    .font(.title2)
                     .scaleEffect(checkmarkScale)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(set.isCompleted ? "Set completed, tap to undo" : "Mark set as done")
-            .frame(width: 30)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
         .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 6)
