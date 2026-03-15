@@ -237,14 +237,16 @@ struct SetRowView: View {
             Spacer()
 
             // Weight input with +/- buttons
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Button {
                     set.weight = max(0, set.weight - 2.5)
                     viewModel.autosave()
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
-                        .font(.body)
+                        .font(.title3)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
 
@@ -261,11 +263,12 @@ struct SetRowView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
-                        .font(.body)
+                        .font(.title3)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
             }
-            .frame(width: 110)
 
             // Reps input
             HStack(spacing: 4) {
