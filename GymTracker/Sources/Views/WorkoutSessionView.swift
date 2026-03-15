@@ -42,13 +42,6 @@ struct WorkoutSessionView: View {
                         }
                     }
 
-                    // Rest timer
-                    Section {
-                        RestTimerView(timer: restTimer)
-                    } header: {
-                        Text("Rest Timer")
-                    }
-
                     // Exercises
                     Section {
                         ForEach(session.sortedExercises) { exercise in
@@ -108,6 +101,12 @@ struct WorkoutSessionView: View {
                 }
                 .listStyle(.insetGrouped)
                 .scrollDismissesKeyboard(.interactively)
+                .safeAreaInset(edge: .bottom) {
+                    RestTimerView(timer: restTimer)
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial)
+                }
             } else {
                 ContentUnavailableView("No Active Workout", systemImage: "figure.walk", description: Text("Start a workout from the home screen"))
             }
