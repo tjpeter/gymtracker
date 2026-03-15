@@ -6,6 +6,8 @@ struct ExerciseCardView: View {
     var globalExpandState: Bool?
     @State private var isExpanded = true
     @State private var isEditingName = false
+    @State private var showRemoveSetAlert = false
+    @State private var showApplyPreviousAlert = false
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -26,13 +28,7 @@ struct ExerciseCardView: View {
                 // Previous values
                 if let prevWeight = exercise.previousWeight {
                     Button {
-                        for set in exercise.sets {
-                            set.weight = prevWeight
-                            if let prevReps = exercise.previousReps {
-                                set.reps = prevReps
-                            }
-                        }
-                        viewModel.autosave()
+                        showApplyPreviousAlert = true
                     } label: {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
@@ -94,9 +90,7 @@ struct ExerciseCardView: View {
                     Spacer()
                     if exercise.sets.count > 1 {
                         Button(role: .destructive) {
-                            if let last = exercise.sortedSets.last {
-                                viewModel.removeSetFromExercise(exercise, set: last)
-                            }
+                            showRemoveSetAlert = true
                         } label: {
                             Label("Remove Set", systemImage: "minus.circle")
                                 .font(.caption)
@@ -110,6 +104,9 @@ struct ExerciseCardView: View {
                 TextField("Notes", text: $exercise.notes)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .onChange(of: exercise.notes) { _, _ in
+                        viewModel.autosave()
+                    }
             }
         } label: {
             HStack {
@@ -147,6 +144,34 @@ struct ExerciseCardView: View {
         .onChange(of: globalExpandState) { _, newValue in
             if let newValue {
                 withAnimation { isExpanded = newValue }
+            }
+        }
+        .alert("Remove Last Set?", isPresented: $showRemoveSetAlert) {
+            Button("Remove", role: .destructive) {
+                if let last = exercise.sortedSets.last {
+                    viewModel.removeSetFromExercise(exercise, set: last)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove the last set from \(exercise.name).")
+        }
+        .alert("Apply Previous Values?", isPresented: $showApplyPreviousAlert) {
+            Button("Apply", role: .none) {
+                if let prevWeight = exercise.previousWeight {
+                    for set in exercise.sets {
+                        set.weight = prevWeight
+                        if let prevReps = exercise.previousReps {
+                            set.reps = prevReps
+                        }
+                    }
+                    viewModel.autosave()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let prevWeight = exercise.previousWeight {
+                Text("This will overwrite all sets with \(prevWeight.formattedWeight) kg\(exercise.previousReps.map { " × \($0) reps" } ?? "").")
             }
         }
     }

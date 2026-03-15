@@ -37,9 +37,9 @@ struct WorkoutDetailView: View {
 
                     ForEach(exercise.sortedSets) { set in
                         HStack {
-                            Text("Set \(set.setNumber)")
+                            Text(set.isWarmup ? "W" : "Set \(set.setNumber)")
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(set.isWarmup ? .orange : .secondary)
                             Spacer()
                             Text("\(set.weight.formattedWeight) kg")
                                 .font(.subheadline.bold())
@@ -48,12 +48,18 @@ struct WorkoutDetailView: View {
                             Text("\(set.reps) reps")
                                 .font(.subheadline)
                         }
+                        .opacity(set.isWarmup ? 0.7 : 1.0)
                     }
 
                     if !exercise.notes.isEmpty {
-                        Text(exercise.notes)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "note.text")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(exercise.notes)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
