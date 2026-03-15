@@ -131,6 +131,12 @@ struct ExerciseCardView: View {
                             }
                         }
                 }
+                if let prev = exercise.previousWeight,
+                   exercise.sets.contains(where: { !$0.isWarmup && $0.weight > prev }) {
+                    Image(systemName: "trophy.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.yellow)
+                }
                 Spacer()
                 let warmupCount = exercise.sets.filter(\.isWarmup).count
                 let workingCount = exercise.sets.count - warmupCount
