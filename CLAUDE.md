@@ -298,17 +298,18 @@ Also:
 - use realistic defaults
 - seed initial templates on first launch
 
-## Implemented set features
+## Implemented features
 
 ### Set management
 - Sets can be added and removed from any exercise during a session
 - Add set appends a new set with values copied from the last set
 - Remove set deletes the last set (minimum one set per exercise); requires confirmation
-- Deleting an exercise requires confirmation
+- Deleting an exercise requires confirmation; shows a temporary undo banner (4s auto-dismiss)
 - Applying previous values requires confirmation to prevent accidental overwrites
 - Exercise renaming discoverable via swipe action, double-tap, or long-press context menu
 - Weight +/- buttons use 44pt minimum touch targets per Apple HIG
 - Exercise notes autosave on change and are displayed in the workout history detail view
+- Set row redesigned for gym usability: weight field 60pt with `.body.bold()`, +/- buttons `.title2`, reps buttons 36pt targets, checkmark 44pt hit area
 
 ### Warmup sets
 - Any set can be marked as a warmup by tapping the set number
@@ -325,9 +326,11 @@ Also:
 - Completion status is preserved accurately when finishing a workout (not force-marked)
 - Completion is independent of whether weight/reps are prefilled
 - Persisted via the `isCompleted` property on `ExerciseSet` (default: `false`)
+- Micro-interaction: checkmark bounces with spring animation on toggle
 
 ### PR indicators
 - Trophy icon appears next to exercise name when any working set exceeds previous session's best weight
+- Trophy pulses with `.symbolEffect(.pulse)` animation (iOS 17+)
 
 ### Previous value context
 - Weight and rep text fields show previous session values as placeholder text
@@ -337,12 +340,33 @@ Also:
 - Pinned to bottom of workout screen as a sticky bar (safeAreaInset)
 - Always visible while scrolling through exercises
 - Preset intervals (60s/90s/120s) and custom duration
+- Auto-start option: when enabled, timer starts automatically on set completion using last-used duration
+- Uses `NotificationCenter` (.setCompleted) for cross-view communication
+
+### Workout completion summary
+- Post-workout summary screen shown after completing a workout
+- Displays duration, total sets, total volume, PR count
+- Per-exercise breakdown with set counts and volume
+- Animated hero with spring scale-in effect
+- PR celebration banner when PRs are hit
+- Presented as `.sheet(item:)` with `.interactiveDismissDisabled()`
+
+### Editable workout history
+- WorkoutDetailView has Edit/Done toolbar button
+- In edit mode: inline editing of weights, reps, exercise names, and notes
+- Changes saved to SwiftData on Done
+- Keyboard Done toolbar button in edit mode
 
 ### Progress tracking
 - Exercise progress charts with toggle between max weight and volume (sets × reps × weight)
 - Volume calculation excludes warmup sets
 - Searchable exercise list replaces the picker for easier navigation
+- Exercises sorted by training frequency (most trained first)
+- Exercise frequency count shown next to each exercise name
 - Workout frequency chart shows weekly training distribution
+- PR reference line (dashed yellow) on exercise progress charts
+- Area fill under chart line marks for premium appearance
+- Trend direction indicator (up/down/flat) badge on charts
 
 ### Collapsible exercise groups
 - Each exercise's set group can be collapsed/expanded individually
@@ -350,6 +374,7 @@ Also:
 
 ### Keyboard dismissal
 - Swipe down on scrollable screens to dismiss the keyboard while editing text fields
+- Done button in keyboard toolbar for numeric fields
 
 ### Body weight chart
 - Y-axis auto-scales to data range (min-1 to max+1) for visible trends
@@ -359,18 +384,83 @@ Also:
 - Default auto-fill from matching gym+workout combo remains the primary flow
 - Supports cross-gym copying (e.g., copy Kreuzlingen workout to use at a new gym)
 
+### Gym name normalization
+- Trims whitespace from gym names
+- Fuzzy match suggestions when typing custom gym names in StartWorkoutView
+
 ### Accessibility
 - VoiceOver labels on all set row controls (warmup toggle, weight/reps buttons, completion checkmark)
 - All interactive buttons use `.borderless` style for consistent tap handling
+- Accessibility labels on home screen stat cards, resume button, start button
+- Accessibility labels on rest timer controls
+- Accessibility labels on body weight history rows
 
 ### Home screen
 - Weekly streak counter (consecutive weeks with at least one workout)
+- Next workout suggestion (e.g. "Try Workout B next")
+- Enriched recent workout rows: workout-type color bar, duration, exercise count, set count
+- Stat cards with subtle tints matching icon colors
+
+### Design system (Theme.swift)
+- Centralized design tokens: corner radii, spacing, chart dimensions, touch targets
+- `Theme.Colors`: workoutA/B, warmup, completed, pr, destructive, energy, streak, cardBackground, inputBackground, buttonBackground, timerTrack, dragHandle, weightText
+- `Theme.Opacity`: tintFill, tintStroke, warmupBackground, completedBackground, warmupRow, warmupDetail
+- All views use Theme constants instead of hardcoded `Color(.systemGray*)` values
+
+### Deletion feedback
+- Exercise deletion shows a temporary red capsule banner at the top of the workout screen
+- Banner auto-dismisses after 4 seconds with animation
+- Uses `NotificationCenter` (.exerciseDeleted) for cross-view communication
 
 ## Data compatibility constraints
 - Workout history must be preserved across updates
 - New persisted properties must have safe defaults so older saved data loads without crashes
 - Do not wipe local storage or rename/remove existing persisted fields without safe migration
 - The `isWarmup` and `isCompleted` fields on `ExerciseSet` default to `false` for backward compatibility
+
+## Project structure
+
+```
+GymTracker/
+├── Sources/
+│   ├── GymTrackerApp.swift          # App entry point
+│   ├── Theme.swift                  # Centralized design tokens
+│   ├── Models/
+│   │   ├── WorkoutSession.swift     # SwiftData models
+│   │   ├── BodyWeightEntry.swift    # Body weight model
+│   │   └── WorkoutTemplates.swift   # Default exercise templates
+│   ├── ViewModels/
+│   │   ├── WorkoutViewModel.swift   # Core workout logic
+│   │   └── RestTimerViewModel.swift # Timer logic with auto-start
+│   ├── Views/
+│   │   ├── HomeView.swift           # Home screen with stats
+│   │   ├── StartWorkoutView.swift   # Gym/workout selection
+│   │   ├── WorkoutSessionView.swift # Active workout logging
+│   │   ├── WorkoutDetailView.swift  # History detail (editable)
+│   │   ├── HistoryView.swift        # Workout history with filters
+│   │   ├── ProgressView_.swift      # Charts and exercise progress
+│   │   ├── BodyWeightView.swift     # Body weight tracking
+│   │   └── Components/
+│   │       ├── ExerciseCardView.swift      # Exercise card with set rows
+│   │       ├── RestTimerView.swift         # Rest timer UI
+│   │       └── WorkoutSummaryView.swift    # Post-workout summary
+│   ├── Extensions/
+│   │   └── Notification+Names.swift # Custom notification names
+│   └── Data/
+│       └── DataExporter.swift       # CSV/JSON export
+├── Resources/
+│   └── Assets.xcassets/             # App icons and assets
+└── project.yml                      # XcodeGen project definition
+```
+
+## Build & run
+
+1. Install XcodeGen: `brew install xcodegen`
+2. Generate the Xcode project: `cd GymTracker && xcodegen generate`
+3. Open `GymTracker.xcodeproj` in Xcode
+4. Build and run on a simulator or device (iOS 17+)
+
+Note: `DEVELOPMENT_TEAM` is set in `project.yml` — update it if using a different Apple Developer account.
 
 ## Nice-to-have features
 Only add these if they do not complicate the app too much:
