@@ -28,6 +28,29 @@ struct ProgressView_: View {
         return counts.sorted { $0.value > $1.value }.map(\.key)
     }
 
+    /// Groups exercises by which workout type(s) they appear in
+    var exercisesByWorkoutType: [(label: String, color: Color, names: [String])] {
+        var typeMap: [String: Set<WorkoutType>] = [:]
+        var counts: [String: Int] = [:]
+        for session in filteredSessions {
+            for exercise in session.exercises {
+                typeMap[exercise.name, default: []].insert(session.workoutType)
+                counts[exercise.name, default: 0] += 1
+            }
+        }
+        let sortByFrequency: ([String]) -> [String] = { names in
+            names.sorted { (counts[$0] ?? 0) > (counts[$1] ?? 0) }
+        }
+        var groups: [(label: String, color: Color, names: [String])] = []
+        let aOnly = typeMap.filter { $0.value == [.a] }.map(\.key)
+        let bOnly = typeMap.filter { $0.value == [.b] }.map(\.key)
+        let both = typeMap.filter { $0.value.count > 1 }.map(\.key)
+        if !aOnly.isEmpty { groups.append((label: "Workout A", color: WorkoutType.a.color, names: sortByFrequency(aOnly))) }
+        if !bOnly.isEmpty { groups.append((label: "Workout B", color: WorkoutType.b.color, names: sortByFrequency(bOnly))) }
+        if !both.isEmpty { groups.append((label: "Both A & B", color: .purple, names: sortByFrequency(both))) }
+        return groups
+    }
+
     func exerciseFrequency(_ name: String) -> Int {
         filteredSessions.reduce(0) { count, session in
             count + (session.exercises.contains { $0.name == name } ? 1 : 0)
@@ -69,7 +92,7 @@ struct ProgressView_: View {
                 }
             }
 
-            Section("Exercise Progress") {
+            Section {
                 if allGymNames.count > 1 {
                     Picker("Gym", selection: $selectedGym) {
                         Text("All Gyms").tag(nil as String?)
@@ -85,28 +108,46 @@ struct ProgressView_: View {
                 } else {
                     TextField("Search exercises", text: $exerciseSearch)
                         .textFieldStyle(.roundedBorder)
+                }
+            } header: {
+                Text("Exercise Progress")
+            }
 
+            if !allExerciseNames.isEmpty {
+                let groups = exercisesByWorkoutType
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
                     let filtered = exerciseSearch.isEmpty
-                        ? allExerciseNames
-                        : allExerciseNames.filter { $0.localizedCaseInsensitiveContains(exerciseSearch) }
-                    ForEach(filtered, id: \.self) { name in
-                        Button {
-                            selectedExercise = name
-                            exerciseSearch = ""
-                        } label: {
-                            HStack {
-                                Text(name)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Text("×\(exerciseFrequency(name))")
-                                    .font(.caption)
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
-                                if selectedExercise == name {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                        .font(.caption)
+                        ? group.names
+                        : group.names.filter { $0.localizedCaseInsensitiveContains(exerciseSearch) }
+                    if !filtered.isEmpty {
+                        Section {
+                            ForEach(filtered, id: \.self) { name in
+                                Button {
+                                    selectedExercise = name
+                                    exerciseSearch = ""
+                                } label: {
+                                    HStack {
+                                        Text(name)
+                                            .foregroundStyle(.primary)
+                                        Spacer()
+                                        Text("×\(exerciseFrequency(name))")
+                                            .font(.caption)
+                                            .monospacedDigit()
+                                            .foregroundStyle(.secondary)
+                                        if selectedExercise == name {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(group.color)
+                                                .font(.caption)
+                                        }
+                                    }
                                 }
+                            }
+                        } header: {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(group.color)
+                                    .frame(width: 8, height: 8)
+                                Text(group.label)
                             }
                         }
                     }
