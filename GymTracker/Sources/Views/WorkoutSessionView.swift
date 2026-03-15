@@ -11,6 +11,7 @@ struct WorkoutSessionView: View {
     @State private var timerVisible = true
     @State private var allExpanded = true
     @State private var globalExpandState: Bool? = nil
+    @State private var completionSummary: WorkoutSummaryData? = nil
 
     var body: some View {
         Group {
@@ -137,13 +138,22 @@ struct WorkoutSessionView: View {
         .alert("Complete Workout?", isPresented: $showCompleteAlert) {
             Button("Complete", role: .none) {
                 restTimer.stop()
+                if let session = viewModel.currentSession {
+                    completionSummary = WorkoutSummaryData.from(session: session)
+                }
                 viewModel.completeWorkout()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                dismiss()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will finalize the workout and save it to your history.")
+        }
+        .sheet(item: $completionSummary) { summary in
+            WorkoutSummaryView(summary: summary) {
+                completionSummary = nil
+                dismiss()
+            }
+            .interactiveDismissDisabled()
         }
         .alert("Discard Workout?", isPresented: $showDiscardAlert) {
             Button("Discard", role: .destructive) {
