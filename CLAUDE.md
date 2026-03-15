@@ -1,4 +1,10 @@
-# CLAUDE.md 
+# CLAUDE.md
+
+## Commit rules
+- NEVER mention Claude, Anthropic, or any AI tool in commit messages, co-author lines, or anywhere in the codebase.
+- Do not add Co-Authored-By lines to commits.
+
+## Project overview
 
 Build a simple but well-designed native iPhone app to log my gym workouts and track progress.
 
