@@ -187,7 +187,7 @@ struct FilterChip: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(
-                    Capsule().fill(isSelected ? color : Color(.systemGray5))
+                    Capsule().fill(isSelected ? color : Theme.Colors.buttonBackground)
                 )
                 .foregroundStyle(isSelected ? .white : .primary)
         }

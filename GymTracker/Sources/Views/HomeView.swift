@@ -259,7 +259,7 @@ struct QuickLinkRow: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.systemGray6))
+                .fill(Theme.Colors.cardBackground)
         )
     }
 }
@@ -309,7 +309,7 @@ struct RecentWorkoutRow: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
+                .fill(Theme.Colors.cardBackground)
         )
     }
 }

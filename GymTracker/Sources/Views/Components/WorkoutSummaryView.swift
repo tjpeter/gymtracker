@@ -179,7 +179,7 @@ struct WorkoutSummaryView: View {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(.systemGray6))
+                                    .fill(Theme.Colors.cardBackground)
                             )
                             .padding(.horizontal)
                         }

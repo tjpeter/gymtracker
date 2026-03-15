@@ -267,7 +267,7 @@ struct SetRowView: View {
                     .monospacedDigit()
                     .frame(width: 60)
                     .padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.Colors.inputBackground))
                     .accessibilityLabel("Weight, \(set.weight.formattedWeight) kg")
 
                 Button {
@@ -311,7 +311,7 @@ struct SetRowView: View {
                     .monospacedDigit()
                     .frame(width: 36)
                     .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.Colors.inputBackground))
                     .accessibilityLabel("Reps, \(set.reps)")
 
                 Button {

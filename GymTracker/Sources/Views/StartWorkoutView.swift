@@ -34,7 +34,7 @@ struct StartWorkoutView: View {
                                     RoundedRectangle(cornerRadius: 14)
                                         .fill(!viewModel.isCustomGym && viewModel.selectedGymName == preset.rawValue
                                               ? Color.blue.opacity(0.15)
-                                              : Color(.systemGray6))
+                                              : Theme.Colors.cardBackground)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
@@ -61,7 +61,7 @@ struct StartWorkoutView: View {
                                 RoundedRectangle(cornerRadius: 14)
                                     .fill(viewModel.isCustomGym
                                           ? Color.blue.opacity(0.15)
-                                          : Color(.systemGray6))
+                                          : Theme.Colors.cardBackground)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
@@ -117,7 +117,7 @@ struct StartWorkoutView: View {
                                                 .padding(.vertical, 6)
                                                 .background(
                                                     Capsule().fill(viewModel.customGymName == name
-                                                                   ? Color.blue : Color(.systemGray5))
+                                                                   ? Color.blue : Theme.Colors.buttonBackground)
                                                 )
                                                 .foregroundStyle(viewModel.customGymName == name ? .white : .primary)
                                         }
@@ -153,7 +153,7 @@ struct StartWorkoutView: View {
                                     RoundedRectangle(cornerRadius: 14)
                                         .fill(viewModel.selectedWorkoutType == type
                                               ? type.color.opacity(0.15)
-                                              : Color(.systemGray6))
+                                              : Theme.Colors.cardBackground)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
@@ -192,7 +192,7 @@ struct StartWorkoutView: View {
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
+                                .fill(Theme.Colors.cardBackground)
                         )
                     }
                 }

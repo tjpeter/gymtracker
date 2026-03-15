@@ -42,7 +42,7 @@ struct RestTimerView: View {
         VStack(spacing: 12) {
             // Drag handle
             Capsule()
-                .fill(Color(.systemGray3))
+                .fill(Theme.Colors.dragHandle)
                 .frame(width: 36, height: 5)
                 .padding(.top, 6)
 
@@ -65,7 +65,7 @@ struct RestTimerView: View {
             // Large circular timer
             ZStack {
                 Circle()
-                    .stroke(Color(.systemGray4), lineWidth: 6)
+                    .stroke(Theme.Colors.timerTrack, lineWidth: 6)
                 Circle()
                     .trim(from: 0, to: 1 - timer.progress)
                     .stroke(
@@ -95,7 +95,7 @@ struct RestTimerView: View {
                         .font(.subheadline.bold())
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Capsule().fill(Color(.systemGray5)))
+                        .background(Capsule().fill(Theme.Colors.buttonBackground))
                 }
                 .buttonStyle(.plain)
 
@@ -135,7 +135,7 @@ struct RestTimerView: View {
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(timer.autoStartEnabled ? Color.orange.opacity(0.15) : Color(.systemGray5))
+                            .fill(timer.autoStartEnabled ? Color.orange.opacity(0.15) : Theme.Colors.buttonBackground)
                     )
                 }
                 .buttonStyle(.plain)
@@ -152,7 +152,7 @@ struct RestTimerView: View {
                             .padding(.vertical, 12)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemGray5))
+                                    .fill(Theme.Colors.buttonBackground)
                             )
                     }
                     .buttonStyle(.plain)
@@ -167,7 +167,7 @@ struct RestTimerView: View {
                         .padding(.vertical, 12)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray5))
+                                .fill(Theme.Colors.buttonBackground)
                         )
                 }
                 .buttonStyle(.plain)
