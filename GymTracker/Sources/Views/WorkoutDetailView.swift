@@ -45,7 +45,7 @@ struct WorkoutDetailView: View {
                                 .foregroundStyle(set.isWarmup ? .orange : .secondary)
                             Spacer()
                             Text("\(set.weight.formattedWeight) kg")
-                                .font(.subheadline.bold())
+                                .font(.body.bold())
                                 .monospacedDigit()
                             Text("×")
                                 .foregroundStyle(.secondary)

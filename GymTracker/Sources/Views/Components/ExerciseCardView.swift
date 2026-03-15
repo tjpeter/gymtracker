@@ -116,11 +116,11 @@ struct ExerciseCardView: View {
             HStack {
                 if isEditingName {
                     TextField("Exercise name", text: $exercise.name)
-                        .font(.subheadline.bold())
+                        .font(.body.bold())
                         .onSubmit { isEditingName = false }
                 } else {
                     Text(exercise.name)
-                        .font(.subheadline.bold())
+                        .font(.body.bold())
                         .onTapGesture(count: 2) {
                             isEditingName = true
                         }
