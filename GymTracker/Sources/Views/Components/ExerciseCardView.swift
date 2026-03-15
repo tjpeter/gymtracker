@@ -73,8 +73,13 @@ struct ExerciseCardView: View {
                 .padding(.top, 4)
 
                 // Individual sets
-                ForEach(exercise.sortedSets) { set in
-                    SetRowView(set: set, viewModel: viewModel)
+                let sorted = exercise.sortedSets
+                ForEach(sorted) { set in
+                    SetRowView(
+                        set: set,
+                        viewModel: viewModel,
+                        workingSetNumber: workingSetNumber(for: set, in: sorted)
+                    )
                 }
 
                 // Add/remove set buttons
@@ -145,6 +150,15 @@ struct ExerciseCardView: View {
             }
         }
     }
+
+    private func workingSetNumber(for set: ExerciseSet, in sets: [ExerciseSet]) -> Int {
+        var count = 0
+        for s in sets {
+            if !s.isWarmup { count += 1 }
+            if s.id == set.id { return count }
+        }
+        return count
+    }
 }
 
 // MARK: - Set Row
@@ -152,6 +166,7 @@ struct ExerciseCardView: View {
 struct SetRowView: View {
     @Bindable var set: ExerciseSet
     @Bindable var viewModel: WorkoutViewModel
+    var workingSetNumber: Int
 
     var body: some View {
         HStack {
@@ -160,7 +175,7 @@ struct SetRowView: View {
                 set.isWarmup.toggle()
                 viewModel.autosave()
             } label: {
-                Text(set.isWarmup ? "W" : "\(set.setNumber)")
+                Text(set.isWarmup ? "W" : "\(workingSetNumber)")
                     .font(.subheadline.bold())
                     .foregroundStyle(set.isWarmup ? .orange : .secondary)
                     .frame(width: 36)
