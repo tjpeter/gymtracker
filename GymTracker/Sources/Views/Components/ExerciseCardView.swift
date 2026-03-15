@@ -283,6 +283,7 @@ struct SetRowView: View {
             // Done toggle
             Button {
                 set.isCompleted.toggle()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 viewModel.autosave()
             } label: {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
