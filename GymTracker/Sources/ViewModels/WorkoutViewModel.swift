@@ -173,7 +173,8 @@ final class WorkoutViewModel {
     }
 
     func removeSetFromExercise(_ exercise: LoggedExercise, set: ExerciseSet) {
-        guard let context = modelContext else { return }
+        guard let context = modelContext, exercise.sets.count > 1 else { return }
+        set.exercise = nil
         exercise.sets.removeAll { $0.id == set.id }
         context.delete(set)
         for (index, s) in exercise.sortedSets.enumerated() {
