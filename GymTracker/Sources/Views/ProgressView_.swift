@@ -19,13 +19,19 @@ struct ProgressView_: View {
     }
 
     var allExerciseNames: [String] {
-        var names = Set<String>()
+        var counts: [String: Int] = [:]
         for session in filteredSessions {
             for exercise in session.exercises {
-                names.insert(exercise.name)
+                counts[exercise.name, default: 0] += 1
             }
         }
-        return names.sorted()
+        return counts.sorted { $0.value > $1.value }.map(\.key)
+    }
+
+    func exerciseFrequency(_ name: String) -> Int {
+        filteredSessions.reduce(0) { count, session in
+            count + (session.exercises.contains { $0.name == name } ? 1 : 0)
+        }
     }
 
     var allGymNames: [String] {
@@ -92,6 +98,10 @@ struct ProgressView_: View {
                                 Text(name)
                                     .foregroundStyle(.primary)
                                 Spacer()
+                                Text("×\(exerciseFrequency(name))")
+                                    .font(.caption)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
                                 if selectedExercise == name {
                                     Image(systemName: "checkmark")
                                         .foregroundStyle(.blue)
@@ -158,8 +168,8 @@ struct ProgressView_: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Progress")
         .onAppear {
-            if selectedExercise == nil, let first = allExerciseNames.first {
-                selectedExercise = first
+            if selectedExercise == nil, let mostTrained = allExerciseNames.first {
+                selectedExercise = mostTrained
             }
         }
     }
@@ -198,39 +208,110 @@ struct ExerciseProgressChart: View {
     let dataPoints: [ExerciseDataPoint]
     var showVolume = false
 
+    private var prValue: Double {
+        dataPoints.map { showVolume ? $0.volume : $0.maxWeight }.max() ?? 0
+    }
+
+    private var trendDirection: TrendDirection {
+        guard dataPoints.count >= 2 else { return .flat }
+        let recent = Array(dataPoints.suffix(3))
+        let older = Array(dataPoints.prefix(max(1, dataPoints.count - 3)))
+        let recentAvg = recent.map { showVolume ? $0.volume : $0.maxWeight }.reduce(0, +) / Double(recent.count)
+        let olderAvg = older.map { showVolume ? $0.volume : $0.maxWeight }.reduce(0, +) / Double(older.count)
+        let diff = recentAvg - olderAvg
+        if diff > olderAvg * 0.02 { return .up }
+        if diff < -olderAvg * 0.02 { return .down }
+        return .flat
+    }
+
     var body: some View {
         let chartColor: Color = showVolume ? .orange : .blue
-        Chart(dataPoints) { point in
-            let yValue = showVolume ? point.volume : point.maxWeight
+        VStack(alignment: .trailing, spacing: 4) {
+            // Trend badge
+            HStack(spacing: 4) {
+                Image(systemName: trendDirection.icon)
+                    .font(.caption2)
+                Text(trendDirection.label)
+                    .font(.caption2.bold())
+            }
+            .foregroundStyle(trendDirection.color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(trendDirection.color.opacity(0.12)))
 
-            AreaMark(
-                x: .value("Date", point.date),
-                y: .value(showVolume ? "Volume" : "Weight", yValue)
-            )
-            .interpolationMethod(.catmullRom)
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [chartColor.opacity(0.2), chartColor.opacity(0.02)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            Chart {
+                ForEach(dataPoints) { point in
+                    let yValue = showVolume ? point.volume : point.maxWeight
 
-            LineMark(
-                x: .value("Date", point.date),
-                y: .value(showVolume ? "Volume" : "Weight", yValue)
-            )
-            .interpolationMethod(.catmullRom)
-            .foregroundStyle(chartColor)
-            .lineStyle(StrokeStyle(lineWidth: 2.5))
+                    AreaMark(
+                        x: .value("Date", point.date),
+                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [chartColor.opacity(0.2), chartColor.opacity(0.02)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
 
-            PointMark(
-                x: .value("Date", point.date),
-                y: .value(showVolume ? "Volume" : "Weight", yValue)
-            )
-            .foregroundStyle(chartColor)
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(chartColor)
+                    .lineStyle(StrokeStyle(lineWidth: 2.5))
+
+                    PointMark(
+                        x: .value("Date", point.date),
+                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                    )
+                    .foregroundStyle(chartColor)
+                }
+
+                // PR reference line
+                RuleMark(y: .value("PR", prValue))
+                    .foregroundStyle(.yellow.opacity(0.5))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
+                    .annotation(position: .top, alignment: .trailing) {
+                        Text("PR \(showVolume ? "\(Int(prValue))" : prValue.formattedWeight)")
+                            .font(.caption2)
+                            .foregroundStyle(.yellow)
+                            .monospacedDigit()
+                    }
+            }
+            .chartYAxisLabel(showVolume ? "kg total" : "kg")
         }
-        .chartYAxisLabel(showVolume ? "kg total" : "kg")
+    }
+}
+
+enum TrendDirection {
+    case up, down, flat
+
+    var icon: String {
+        switch self {
+        case .up: return "arrow.up.right"
+        case .down: return "arrow.down.right"
+        case .flat: return "arrow.right"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .up: return "Trending up"
+        case .down: return "Trending down"
+        case .flat: return "Stable"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .up: return .green
+        case .down: return .red
+        case .flat: return .secondary
+        }
     }
 }
 
