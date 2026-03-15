@@ -137,6 +137,7 @@ struct ExerciseCardView: View {
                     Image(systemName: "trophy.fill")
                         .font(.caption2)
                         .foregroundStyle(.yellow)
+                        .symbolEffect(.pulse, options: .repeating.speed(0.5))
                 }
                 Spacer()
                 let completedCount = exercise.sets.filter(\.isCompleted).count
@@ -230,6 +231,7 @@ struct SetRowView: View {
     var workingSetNumber: Int
     var previousWeight: Double?
     var previousReps: Int?
+    @State private var checkmarkScale: CGFloat = 1.0
 
     var body: some View {
         HStack {
@@ -328,11 +330,20 @@ struct SetRowView: View {
                 viewModel.autosave()
                 if set.isCompleted {
                     NotificationCenter.default.post(name: .setCompleted, object: nil)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
+                        checkmarkScale = 1.3
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                            checkmarkScale = 1.0
+                        }
+                    }
                 }
             } label: {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))
                     .font(.title3)
+                    .scaleEffect(checkmarkScale)
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(set.isCompleted ? "Set completed, tap to undo" : "Mark set as done")

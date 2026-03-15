@@ -58,6 +58,8 @@ struct WorkoutSummaryData: Identifiable {
 struct WorkoutSummaryView: View {
     let summary: WorkoutSummaryData
     let onDismiss: () -> Void
+    @State private var heroScale: CGFloat = 0.5
+    @State private var heroOpacity: Double = 0
 
     var body: some View {
         NavigationStack {
@@ -68,9 +70,12 @@ struct WorkoutSummaryView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 56))
                             .foregroundStyle(.green)
+                            .scaleEffect(heroScale)
+                            .opacity(heroOpacity)
 
                         Text("Workout Complete!")
                             .font(.title2.bold())
+                            .opacity(heroOpacity)
 
                         HStack(spacing: 4) {
                             Text(summary.gymName)
@@ -190,6 +195,12 @@ struct WorkoutSummaryView: View {
                         onDismiss()
                     }
                     .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                    heroScale = 1.0
+                    heroOpacity = 1.0
                 }
             }
         }
