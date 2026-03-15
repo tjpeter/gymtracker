@@ -12,11 +12,11 @@ A simple, native iOS app for logging gym workouts and tracking progress. Built w
 - **Autosave** — every weight/rep change saved immediately; resume after app crash or close
 - **Template persistence** — renaming/removing exercises updates the template for that gym+workout
 - **In-session editing** — add/remove exercises and sets, rename (long-press or double-tap), adjust weights with +/- buttons
-- **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange
+- **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange; working sets renumber consecutively
 - **Set completion tracking** — mark individual sets as done with a checkmark toggle; done status is distinct from prefilled values
 - **Collapsible exercises** — collapse/expand individual exercise set groups, or toggle all at once with the global collapse button
 - **Exercise autocomplete** — when adding exercises mid-session, suggestions from your workout history appear
-- **Quick-apply previous values** — tap the "Previous" badge to apply last session's top weight to all sets
+- **Quick-apply previous values** — tap the "Previous" badge to apply last session's top weight to all sets (with confirmation)
 - **Workout history** — filterable by gym and workout type, with swipe-to-delete and session duration
 - **Progress tracking** — weight progression charts per exercise, filterable by gym, workout frequency, PR indicators
 - **Body weight tracking** — log weight, view trends over time
@@ -96,7 +96,7 @@ Selecting "Other" in the gym picker lets you type a custom name. Previously used
 During a workout, use the rest timer section to time rest between sets. Choose a preset (60s, 90s, 120s) or set a custom duration. The timer provides haptic feedback when complete and sends a notification if the app is in the background.
 
 ### Set Management
-Add or remove sets from any exercise during a session. Tap the set number to toggle warmup status. Use the checkmark to mark sets as done — this is explicit and independent of prefilled weight/rep values.
+Add or remove sets from any exercise during a session. Removing a set and applying previous values both require confirmation to prevent accidental changes. Tap the set number to toggle warmup status — working sets renumber consecutively, skipping warmup sets. Use the checkmark to mark sets as done — this is explicit and independent of prefilled weight/rep values. Exercise notes are autosaved and visible in the workout history detail view.
 
 ### Collapsible Exercises
 Each exercise's set group can be collapsed or expanded individually. Use the collapse/expand button in the exercises section header to toggle all exercises at once.

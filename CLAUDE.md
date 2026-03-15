@@ -297,11 +297,15 @@ Also:
 ### Set management
 - Sets can be added and removed from any exercise during a session
 - Add set appends a new set with values copied from the last set
-- Remove set deletes the last set (minimum one set per exercise)
+- Remove set deletes the last set (minimum one set per exercise); requires confirmation
+- Applying previous values requires confirmation to prevent accidental overwrites
+- Exercise notes autosave on change and are displayed in the workout history detail view
 
 ### Warmup sets
 - Any set can be marked as a warmup by tapping the set number
 - Warmup sets display "W" in orange with reduced opacity
+- Working sets renumber consecutively (1, 2, 3...), skipping warmup sets
+- Warmup sets are also shown in the history detail view
 - Warmup status is persisted via the `isWarmup` property on `ExerciseSet` (default: `false`)
 
 ### Set completion tracking
