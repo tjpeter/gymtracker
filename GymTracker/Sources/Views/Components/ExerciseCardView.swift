@@ -36,6 +36,7 @@ struct ExerciseCardView: View {
                                 .font(.caption2)
                             Text("Previous: \(prevWeight.formattedWeight) kg")
                                 .font(.caption)
+                                .monospacedDigit()
                             if let prevReps = exercise.previousReps {
                                 Text("× \(prevReps)")
                                     .font(.caption)
@@ -261,6 +262,7 @@ struct SetRowView: View {
                 TextField(previousWeight.map { $0.formattedWeight } ?? "0", value: $set.weight, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
+                    .monospacedDigit()
                     .frame(width: 50)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
@@ -296,6 +298,7 @@ struct SetRowView: View {
                 TextField(previousReps.map { "\($0)" } ?? "0", value: $set.reps, format: .number)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
+                    .monospacedDigit()
                     .frame(width: 32)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))

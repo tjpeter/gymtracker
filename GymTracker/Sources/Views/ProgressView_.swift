@@ -135,12 +135,14 @@ struct ProgressView_: View {
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("\(point.maxWeight.formattedWeight) kg")
                                     .font(.subheadline.bold())
+                                    .monospacedDigit()
                                 HStack(spacing: 4) {
                                     Text("\(point.totalSets) sets")
                                     Text("·")
                                     Text("\(Int(point.volume)) kg vol")
                                 }
                                 .font(.caption)
+                                .monospacedDigit()
                                 .foregroundStyle(.secondary)
                             }
                             if point.maxWeight == dataPoints.map(\.maxWeight).max() {

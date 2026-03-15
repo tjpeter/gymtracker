@@ -55,6 +55,7 @@ struct BodyWeightView: View {
                     LabeledContent("Latest Weight") {
                         Text("\(latest.weight.formattedWeight) kg")
                             .font(.headline)
+                            .monospacedDigit()
                     }
                     LabeledContent("Date") {
                         Text(latest.date, style: .date)
@@ -64,6 +65,7 @@ struct BodyWeightView: View {
                         let change = latest.weight - oldest.weight
                         LabeledContent("Change (all time)") {
                             Text("\(change >= 0 ? "+" : "")\(change.formattedWeight) kg")
+                                .monospacedDigit()
                         }
                     }
                 }
@@ -89,6 +91,7 @@ struct BodyWeightView: View {
                             Spacer()
                             Text("\(entry.weight.formattedWeight) kg")
                                 .font(.subheadline.bold())
+                                .monospacedDigit()
                         }
                     }
                     .onDelete(perform: deleteEntries)

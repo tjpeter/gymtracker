@@ -199,6 +199,7 @@ struct StatCard: View {
                 .foregroundStyle(color)
             Text(value)
                 .font(.title2.bold())
+                .monospacedDigit()
             Text(title)
                 .font(.caption)
                 .foregroundStyle(.secondary)

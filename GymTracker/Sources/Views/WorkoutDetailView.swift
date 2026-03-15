@@ -43,10 +43,12 @@ struct WorkoutDetailView: View {
                             Spacer()
                             Text("\(set.weight.formattedWeight) kg")
                                 .font(.subheadline.bold())
+                                .monospacedDigit()
                             Text("×")
                                 .foregroundStyle(.secondary)
                             Text("\(set.reps) reps")
                                 .font(.subheadline)
+                                .monospacedDigit()
                         }
                         .opacity(set.isWarmup ? 0.7 : 1.0)
                     }
