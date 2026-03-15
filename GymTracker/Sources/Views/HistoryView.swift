@@ -57,7 +57,7 @@ struct HistoryView: View {
                             filterWorkout = nil
                         }
                         ForEach(WorkoutType.allCases) { type in
-                            FilterChip(title: type.displayName, isSelected: filterWorkout == type) {
+                            FilterChip(title: type.displayName, isSelected: filterWorkout == type, color: type.color) {
                                 filterWorkout = filterWorkout == type ? nil : type
                             }
                         }
@@ -83,7 +83,7 @@ struct HistoryView: View {
                                     .foregroundStyle(.secondary)
                                 Text(session.workoutType.displayName)
                                     .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(session.workoutType.color)
                                 Spacer()
                             }
                             HStack {
@@ -177,6 +177,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 struct FilterChip: View {
     let title: String
     let isSelected: Bool
+    var color: Color = .blue
     let action: () -> Void
 
     var body: some View {
@@ -186,7 +187,7 @@ struct FilterChip: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(
-                    Capsule().fill(isSelected ? Color.blue : Color(.systemGray5))
+                    Capsule().fill(isSelected ? color : Color(.systemGray5))
                 )
                 .foregroundStyle(isSelected ? .white : .primary)
         }

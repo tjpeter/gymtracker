@@ -8,6 +8,7 @@ struct WorkoutSessionView: View {
     @State private var showDiscardAlert = false
     @State private var showCompleteAlert = false
     @State private var restTimer = RestTimerViewModel()
+    @State private var timerVisible = true
     @State private var allExpanded = true
     @State private var globalExpandState: Bool? = nil
 
@@ -22,9 +23,10 @@ struct WorkoutSessionView: View {
                             Spacer()
                             Text(session.workoutType.displayName)
                                 .font(.subheadline.bold())
+                                .foregroundStyle(session.workoutType.color)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .background(Capsule().fill(.blue.opacity(0.15)))
+                                .background(Capsule().fill(session.workoutType.color.opacity(0.15)))
                         }
                         HStack {
                             Label("Started", systemImage: "clock")
@@ -102,10 +104,8 @@ struct WorkoutSessionView: View {
                 .listStyle(.insetGrouped)
                 .scrollDismissesKeyboard(.interactively)
                 .safeAreaInset(edge: .bottom) {
-                    RestTimerView(timer: restTimer)
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                        .background(.ultraThinMaterial)
+                    RestTimerView(timer: restTimer, isVisible: $timerVisible)
+                        .animation(.spring(duration: 0.3), value: timerVisible)
                 }
             } else {
                 ContentUnavailableView("No Active Workout", systemImage: "figure.walk", description: Text("Start a workout from the home screen"))
@@ -154,6 +154,13 @@ struct WorkoutSessionView: View {
         }
         .onAppear {
             RestTimerViewModel.requestNotificationPermission()
+        }
+        .onChange(of: restTimer.isRunning) { _, running in
+            if running {
+                withAnimation(.spring(duration: 0.3)) {
+                    timerVisible = true
+                }
+            }
         }
     }
 }

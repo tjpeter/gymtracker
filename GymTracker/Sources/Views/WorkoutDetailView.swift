@@ -7,7 +7,10 @@ struct WorkoutDetailView: View {
         List {
             Section {
                 LabeledContent("Gym", value: session.gymName)
-                LabeledContent("Workout", value: session.workoutType.displayName)
+                LabeledContent("Workout") {
+                    Text(session.workoutType.displayName)
+                        .foregroundStyle(session.workoutType.color)
+                }
                 LabeledContent("Date") {
                     Text(session.date, style: .date)
                 }

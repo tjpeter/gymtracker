@@ -127,12 +127,12 @@ struct StartWorkoutView: View {
                                 .background(
                                     RoundedRectangle(cornerRadius: 14)
                                         .fill(viewModel.selectedWorkoutType == type
-                                              ? Color.blue.opacity(0.15)
+                                              ? type.color.opacity(0.15)
                                               : Color(.systemGray6))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(viewModel.selectedWorkoutType == type ? Color.blue : Color.clear, lineWidth: 2)
+                                        .stroke(viewModel.selectedWorkoutType == type ? type.color : Color.clear, lineWidth: 2)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -282,7 +282,7 @@ struct CopyFromSessionSheet: View {
                                         .foregroundStyle(.secondary)
                                     Text(session.workoutType.displayName)
                                         .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(session.workoutType.color)
                                 }
                                 HStack {
                                     Text(session.date, style: .date)

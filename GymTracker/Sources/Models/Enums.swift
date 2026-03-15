@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Gym Presets
 
@@ -35,6 +36,13 @@ enum WorkoutType: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .a: return "Horizontal Push/Pull + Quads"
         case .b: return "Vertical Push/Pull + Posterior Chain"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .a: return .blue
+        case .b: return .teal
         }
     }
 }

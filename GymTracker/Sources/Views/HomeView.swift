@@ -251,8 +251,14 @@ struct RecentWorkoutRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(session.gymName) · \(session.workoutType.displayName)")
-                    .font(.subheadline.bold())
+                HStack(spacing: 4) {
+                    Text(session.gymName)
+                    Text("·")
+                        .foregroundStyle(.secondary)
+                    Text(session.workoutType.displayName)
+                        .foregroundStyle(session.workoutType.color)
+                }
+                .font(.subheadline.bold())
                 Text(session.date, style: .date)
                     .font(.caption)
                     .foregroundStyle(.secondary)
