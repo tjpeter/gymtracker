@@ -239,6 +239,7 @@ struct SetRowView: View {
                     .frame(width: 36)
             }
             .buttonStyle(.borderless)
+            .accessibilityLabel(set.isWarmup ? "Warmup set, tap to make working set" : "Set \(workingSetNumber), tap to mark as warmup")
 
             Spacer()
 
@@ -255,6 +256,7 @@ struct SetRowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Decrease weight by 2.5 kg")
 
                 TextField(previousWeight.map { $0.formattedWeight } ?? "0", value: $set.weight, format: .number)
                     .keyboardType(.decimalPad)
@@ -262,6 +264,7 @@ struct SetRowView: View {
                     .frame(width: 50)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
+                    .accessibilityLabel("Weight, \(set.weight.formattedWeight) kg")
 
                 Button {
                     set.weight += 2.5
@@ -274,6 +277,7 @@ struct SetRowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Increase weight by 2.5 kg")
             }
 
             // Reps input
@@ -287,6 +291,7 @@ struct SetRowView: View {
                         .font(.caption)
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Decrease reps")
 
                 TextField(previousReps.map { "\($0)" } ?? "0", value: $set.reps, format: .number)
                     .keyboardType(.numberPad)
@@ -294,6 +299,7 @@ struct SetRowView: View {
                     .frame(width: 32)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
+                    .accessibilityLabel("Reps, \(set.reps)")
 
                 Button {
                     set.reps += 1
@@ -304,6 +310,7 @@ struct SetRowView: View {
                         .font(.caption)
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Increase reps")
             }
             .frame(width: 70)
 
@@ -318,6 +325,7 @@ struct SetRowView: View {
                     .font(.title3)
             }
             .buttonStyle(.borderless)
+            .accessibilityLabel(set.isCompleted ? "Set completed, tap to undo" : "Mark set as done")
             .frame(width: 30)
         }
         .padding(.vertical, 2)
