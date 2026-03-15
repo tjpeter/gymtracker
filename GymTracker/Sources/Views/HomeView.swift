@@ -19,7 +19,13 @@ struct HomeView: View {
         guard let last = completedSessions.first else { return "No workouts yet" }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
-        return "\(last.gymName) · \(last.workoutType.displayName) · \(formatter.localizedString(for: last.date, relativeTo: Date()))"
+        return "Last: \(last.gymName) · \(last.workoutType.displayName) · \(formatter.localizedString(for: last.date, relativeTo: Date()))"
+    }
+
+    var nextWorkoutSuggestion: String? {
+        guard let last = completedSessions.first else { return nil }
+        let nextType: WorkoutType = last.workoutType == .a ? .b : .a
+        return "Try \(nextType.displayName) next"
     }
 
     var body: some View {
@@ -60,21 +66,30 @@ struct HomeView: View {
                     Button {
                         showStartWorkout = true
                     } label: {
-                        VStack(spacing: 12) {
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .font(.system(size: 44))
-                                .foregroundStyle(.white)
-                            Text("Start Workout")
-                                .font(.title2.bold())
-                                .foregroundStyle(.white)
-                            if totalWorkouts > 0 {
-                                Text(lastWorkoutText)
-                                    .font(.caption)
-                                    .foregroundStyle(.white.opacity(0.8))
+                        HStack {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Start Workout")
+                                    .font(.title2.bold())
+                                    .foregroundStyle(.white)
+                                if totalWorkouts > 0 {
+                                    Text(lastWorkoutText)
+                                        .font(.caption)
+                                        .foregroundStyle(.white.opacity(0.8))
+                                }
+                                if let suggestion = nextWorkoutSuggestion {
+                                    Text(suggestion)
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.white.opacity(0.9))
+                                }
                             }
+                            Spacer()
+                            Image(systemName: "figure.strengthtraining.traditional")
+                                .font(.system(size: 36))
+                                .foregroundStyle(.white.opacity(0.8))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 24)
                         .background(
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(.blue.gradient)
@@ -252,8 +267,16 @@ struct QuickLinkRow: View {
 struct RecentWorkoutRow: View {
     let session: WorkoutSession
 
+    private var totalSets: Int {
+        session.exercises.reduce(0) { $0 + $1.sets.filter { !$0.isWarmup }.count }
+    }
+
     var body: some View {
         HStack {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(session.workoutType.color)
+                .frame(width: 3)
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 4) {
                     Text(session.gymName)
@@ -263,14 +286,22 @@ struct RecentWorkoutRow: View {
                         .foregroundStyle(session.workoutType.color)
                 }
                 .font(.subheadline.bold())
-                Text(session.date, style: .date)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Text("\(session.exercises.count) exercises")
+
+                HStack(spacing: 8) {
+                    Text(session.date, style: .date)
+                    if let duration = session.durationMinutes {
+                        Text("·")
+                        Text("\(duration) min")
+                    }
+                    Text("·")
+                    Text("\(session.exercises.count) exercises")
+                    Text("·")
+                    Text("\(totalSets) sets")
+                }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+            Spacer()
             Image(systemName: "chevron.right")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
