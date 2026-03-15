@@ -96,11 +96,6 @@ final class WorkoutViewModel {
         guard let session = currentSession else { return }
         session.isCompleted = true
         session.endDate = Date()
-        for exercise in session.exercises {
-            for set in exercise.sets {
-                set.isCompleted = true
-            }
-        }
         autosave()
         isWorkoutActive = false
         currentSession = nil
