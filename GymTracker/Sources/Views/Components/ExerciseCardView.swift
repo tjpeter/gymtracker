@@ -8,6 +8,7 @@ struct ExerciseCardView: View {
     @State private var isEditingName = false
     @State private var showRemoveSetAlert = false
     @State private var showApplyPreviousAlert = false
+    @State private var showDeleteExerciseAlert = false
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -136,7 +137,7 @@ struct ExerciseCardView: View {
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
-                viewModel.removeExercise(exercise)
+                showDeleteExerciseAlert = true
             } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -155,6 +156,14 @@ struct ExerciseCardView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove the last set from \(exercise.name).")
+        }
+        .alert("Delete Exercise?", isPresented: $showDeleteExerciseAlert) {
+            Button("Delete", role: .destructive) {
+                viewModel.removeExercise(exercise)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove \(exercise.name) and all its sets from this workout.")
         }
         .alert("Apply Previous Values?", isPresented: $showApplyPreviousAlert) {
             Button("Apply", role: .none) {
