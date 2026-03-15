@@ -8,19 +8,19 @@ A simple, native iOS app for logging gym workouts and tracking progress. Built w
 - **Two alternating workouts** (A/B) based on an evidence-based hypertrophy program
 - **Gym-specific templates** — exercises and weights tailored to Wädenswil, Kreuzlingen, or custom gyms
 - **Custom gym support** — enter any gym name (e.g. "Davos"), reuse it later
-- **Smart auto-fill** — full set scheme (warmups, working sets, drop sets) copied from last session; "Previous" badge shows your top weight
+- **Smart auto-fill** — full set scheme (warmups, working sets, drop sets) copied from last session including warmup status; "Previous" badge shows your top weight; per-set placeholder text shows last session's values
 - **Autosave** — every weight/rep change saved immediately; resume after app crash or close
 - **Template persistence** — renaming/removing exercises updates the template for that gym+workout
-- **In-session editing** — add/remove exercises and sets, rename (long-press or double-tap), adjust weights with +/- buttons
-- **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange; working sets renumber consecutively
-- **Set completion tracking** — mark individual sets as done with a checkmark toggle; done status is distinct from prefilled values
+- **In-session editing** — add/remove exercises and sets (with confirmation), rename (long-press or double-tap), adjust weights with +/- buttons
+- **Warmup sets** — tap a set number to mark it as a warmup; warmup sets display "W" in orange; working sets renumber consecutively; exercise header shows "3 sets + 2W" breakdown; warmup status carried forward to new sessions
+- **Set completion tracking** — mark individual sets as done with a checkmark toggle and haptic feedback; completed sets highlighted with green tint; done status preserved accurately on workout completion
 - **Collapsible exercises** — collapse/expand individual exercise set groups, or toggle all at once with the global collapse button
 - **Exercise autocomplete** — when adding exercises mid-session, suggestions from your workout history appear
 - **Quick-apply previous values** — tap the "Previous" badge to apply last session's top weight to all sets (with confirmation)
 - **Workout history** — filterable by gym and workout type, with swipe-to-delete and session duration
-- **Progress tracking** — weight progression charts per exercise, filterable by gym, workout frequency, PR indicators
-- **Body weight tracking** — log weight, view trends over time
-- **Rest timer** — preset intervals (60s/90s/120s) or custom, with haptic feedback and background notifications
+- **Progress tracking** — weight progression and volume charts per exercise (toggle between views), filterable by gym, searchable exercise list, workout frequency, PR indicators
+- **Body weight tracking** — log weight, view trends over time with auto-scaled chart
+- **Rest timer** — sticky bottom bar with preset intervals (60s/90s/120s) or custom, with haptic feedback and background notifications; always visible while scrolling exercises
 - **Data export** — export all workout and body weight data as CSV or JSON via the native share sheet
 - **Pre-loaded history** — 9 historical workouts imported from handwritten logs
 
@@ -87,16 +87,19 @@ Every weight/rep change, exercise edit, and note is saved to SwiftData immediate
 When you rename or remove exercises during a workout and complete it, those changes become the default for the next session of the same gym + workout combination. Changes are scoped per gym — modifying Workout A at Wädenswil won't affect Workout A at Kreuzlingen.
 
 ### Previous Values & Autofill
-When starting a new workout, the app copies the **full set scheme** from your last matching session (same gym + workout type) — including warmup sets, working sets, and drop sets. The blue "Previous" badge shows a compact summary of your **top weight** from last time. Tap "Apply" to quickly set all sets to that previous top weight.
+When starting a new workout, the app copies the **full set scheme** from your last matching session (same gym + workout type) — including warmup sets, working sets, drop sets, and warmup status. The blue "Previous" badge shows a compact summary of your **top weight** from last time. Tap "Apply" to quickly set all sets to that previous top weight (with confirmation). Weight and rep text fields show the previous session's values as placeholder text for per-set context.
 
 ### Custom Gyms
 Selecting "Other" in the gym picker lets you type a custom name. Previously used custom names (like "Davos") appear as quick-select chips for reuse.
 
 ### Rest Timer
-During a workout, use the rest timer section to time rest between sets. Choose a preset (60s, 90s, 120s) or set a custom duration. The timer provides haptic feedback when complete and sends a notification if the app is in the background.
+The rest timer is pinned to the bottom of the workout screen as a sticky bar, always visible while scrolling through exercises. Choose a preset (60s, 90s, 120s) or set a custom duration. The timer provides haptic feedback when complete and sends a notification if the app is in the background.
 
 ### Set Management
-Add or remove sets from any exercise during a session. Removing a set and applying previous values both require confirmation to prevent accidental changes. Tap the set number to toggle warmup status — working sets renumber consecutively, skipping warmup sets. Use the checkmark to mark sets as done — this is explicit and independent of prefilled weight/rep values. Exercise notes are autosaved and visible in the workout history detail view.
+Add or remove sets from any exercise during a session. Removing a set, deleting an exercise, and applying previous values all require confirmation to prevent accidental changes. Tap the set number to toggle warmup status — working sets renumber consecutively, skipping warmup sets. The exercise header shows a breakdown like "3 sets + 2W". Use the checkmark to mark sets as done (with haptic feedback) — completed sets are highlighted with a subtle green tint. Completion status is preserved accurately when finishing a workout. Exercise notes are autosaved and visible in the workout history detail view.
+
+### PR Indicators
+A trophy icon appears next to the exercise name during a workout when any working set weight exceeds your previous session's best weight, giving immediate feedback on personal records.
 
 ### Collapsible Exercises
 Each exercise's set group can be collapsed or expanded individually. Use the collapse/expand button in the exercises section header to toggle all exercises at once.
@@ -119,6 +122,6 @@ Historical sessions were parsed from handwritten notebook images and imported as
 - iCloud sync (requires paid Apple Developer account)
 - Apple Watch companion
 - Apple Health integration
-- Workout duplication (copy a previous session as starting point)
-- PR / personal record indicators in session view
+- Workout duplication (copy a previous session as starting point, including cross-gym)
 - Favorite exercises
+- Accessibility improvements (VoiceOver labels, Dynamic Type)

@@ -298,6 +298,7 @@ Also:
 - Sets can be added and removed from any exercise during a session
 - Add set appends a new set with values copied from the last set
 - Remove set deletes the last set (minimum one set per exercise); requires confirmation
+- Deleting an exercise requires confirmation
 - Applying previous values requires confirmation to prevent accidental overwrites
 - Exercise notes autosave on change and are displayed in the workout history detail view
 
@@ -305,13 +306,35 @@ Also:
 - Any set can be marked as a warmup by tapping the set number
 - Warmup sets display "W" in orange with reduced opacity
 - Working sets renumber consecutively (1, 2, 3...), skipping warmup sets
+- Exercise header shows breakdown (e.g. "3 sets + 2W")
+- Warmup status is carried forward when starting a new session from a previous one
 - Warmup sets are also shown in the history detail view
 - Warmup status is persisted via the `isWarmup` property on `ExerciseSet` (default: `false`)
 
 ### Set completion tracking
-- Each set has an explicit done/not-done toggle (checkmark)
+- Each set has an explicit done/not-done toggle (checkmark) with haptic feedback
+- Completed sets are highlighted with a subtle green background tint
+- Completion status is preserved accurately when finishing a workout (not force-marked)
 - Completion is independent of whether weight/reps are prefilled
 - Persisted via the `isCompleted` property on `ExerciseSet` (default: `false`)
+
+### PR indicators
+- Trophy icon appears next to exercise name when any working set exceeds previous session's best weight
+
+### Previous value context
+- Weight and rep text fields show previous session values as placeholder text
+- Gives per-set context without requiring interaction with the "Previous" badge
+
+### Rest timer
+- Pinned to bottom of workout screen as a sticky bar (safeAreaInset)
+- Always visible while scrolling through exercises
+- Preset intervals (60s/90s/120s) and custom duration
+
+### Progress tracking
+- Exercise progress charts with toggle between max weight and volume (sets × reps × weight)
+- Volume calculation excludes warmup sets
+- Searchable exercise list replaces the picker for easier navigation
+- Workout frequency chart shows weekly training distribution
 
 ### Collapsible exercise groups
 - Each exercise's set group can be collapsed/expanded individually
@@ -319,6 +342,12 @@ Also:
 
 ### Keyboard dismissal
 - Swipe down on scrollable screens to dismiss the keyboard while editing text fields
+
+### Body weight chart
+- Y-axis auto-scales to data range (min-1 to max+1) for visible trends
+
+### Home screen
+- Weekly streak counter (consecutive weeks with at least one workout)
 
 ## Data compatibility constraints
 - Workout history must be preserved across updates
@@ -328,9 +357,9 @@ Also:
 
 ## Nice-to-have features
 Only add these if they do not complicate the app too much:
-- duplicate previous workout
+- duplicate previous workout (copy from any session, including cross-gym)
 - mark favorite exercises
-- PR/highest weight indicators
+- accessibility improvements (VoiceOver labels, Dynamic Type support)
 
 ## Important constraints
 - Keep the app focused and usable
