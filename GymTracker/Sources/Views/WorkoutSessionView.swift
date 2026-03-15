@@ -8,6 +8,8 @@ struct WorkoutSessionView: View {
     @State private var showDiscardAlert = false
     @State private var showCompleteAlert = false
     @State private var restTimer = RestTimerViewModel()
+    @State private var allExpanded = true
+    @State private var globalExpandState: Bool? = nil
 
     var body: some View {
         Group {
@@ -50,7 +52,7 @@ struct WorkoutSessionView: View {
                     // Exercises
                     Section {
                         ForEach(session.sortedExercises) { exercise in
-                            ExerciseCardView(exercise: exercise, viewModel: viewModel)
+                            ExerciseCardView(exercise: exercise, viewModel: viewModel, globalExpandState: globalExpandState)
                         }
                         .onMove { source, destination in
                             viewModel.moveExercise(from: source, to: destination)
@@ -59,6 +61,13 @@ struct WorkoutSessionView: View {
                         HStack {
                             Text("Exercises")
                             Spacer()
+                            Button {
+                                allExpanded.toggle()
+                                globalExpandState = allExpanded
+                            } label: {
+                                Image(systemName: allExpanded ? "rectangle.compress.vertical" : "rectangle.expand.vertical")
+                                    .font(.subheadline)
+                            }
                             Button {
                                 showAddExercise = true
                             } label: {

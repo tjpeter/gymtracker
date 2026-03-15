@@ -3,6 +3,7 @@ import SwiftUI
 struct ExerciseCardView: View {
     @Bindable var exercise: LoggedExercise
     @Bindable var viewModel: WorkoutViewModel
+    var globalExpandState: Bool?
     @State private var isExpanded = true
     @State private var isEditingName = false
 
@@ -134,6 +135,11 @@ struct ExerciseCardView: View {
                 viewModel.removeExercise(exercise)
             } label: {
                 Label("Delete", systemImage: "trash")
+            }
+        }
+        .onChange(of: globalExpandState) { _, newValue in
+            if let newValue {
+                withAnimation { isExpanded = newValue }
             }
         }
     }
