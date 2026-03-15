@@ -91,6 +91,52 @@ final class WorkoutViewModel {
         isWorkoutActive = true
     }
 
+    func startWorkout(copyingFrom sourceSession: WorkoutSession) {
+        guard let context = modelContext else { return }
+        let gymName = effectiveGymName
+        guard !gymName.isEmpty else { return }
+
+        let session = WorkoutSession(gymName: gymName, workoutType: selectedWorkoutType)
+
+        for (index, prev) in sourceSession.sortedExercises.enumerated() {
+            let prevWeight = prev.sortedSets.map(\.weight).max()
+            let prevReps = prev.sortedSets.first(where: { $0.weight == prevWeight })?.reps
+            let exercise = LoggedExercise(
+                name: prev.name,
+                order: index,
+                machineName: prev.machineName,
+                previousWeight: prevWeight,
+                previousReps: prevReps
+            )
+            for prevSet in prev.sortedSets {
+                let set = ExerciseSet(
+                    setNumber: prevSet.setNumber,
+                    reps: prevSet.reps,
+                    weight: prevSet.weight,
+                    isWarmup: prevSet.isWarmup
+                )
+                exercise.sets.append(set)
+            }
+            exercise.session = session
+            session.exercises.append(exercise)
+        }
+
+        context.insert(session)
+        autosave()
+        currentSession = session
+        isWorkoutActive = true
+    }
+
+    func recentCompletedSessions(limit: Int = 20) -> [WorkoutSession] {
+        guard let context = modelContext else { return [] }
+        var descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.isCompleted == true },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
     // MARK: - Complete Workout
 
     func completeWorkout() {

@@ -4,6 +4,8 @@ struct StartWorkoutView: View {
     @Bindable var viewModel: WorkoutViewModel
     var onStart: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var showCopyFromSheet = false
+    @State private var copyFromSession: WorkoutSession?
 
     var body: some View {
         NavigationStack {
@@ -172,22 +174,64 @@ struct StartWorkoutView: View {
 
                 Spacer()
 
-                // Start button
-                Button {
-                    viewModel.startWorkout()
-                    onStart()
-                } label: {
-                    Text("Begin Workout")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(canStart ? .blue : .gray)
-                        )
+                // Copy from previous session
+                if copyFromSession != nil {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                        Text("Copying from: \(copyFromSession!.gymName) \(copyFromSession!.workoutType.displayName)")
+                            .font(.caption)
+                        Spacer()
+                        Button {
+                            copyFromSession = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.1)))
                 }
-                .disabled(!canStart)
+
+                // Start buttons
+                HStack(spacing: 12) {
+                    Button {
+                        showCopyFromSheet = true
+                    } label: {
+                        Label("Copy from...", systemImage: "doc.on.doc")
+                            .font(.subheadline)
+                            .foregroundStyle(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.blue, lineWidth: 1.5)
+                            )
+                    }
+
+                    Button {
+                        if let source = copyFromSession {
+                            viewModel.startWorkout(copyingFrom: source)
+                        } else {
+                            viewModel.startWorkout()
+                        }
+                        onStart()
+                    } label: {
+                        Text("Begin Workout")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(canStart ? .blue : .gray)
+                            )
+                    }
+                    .disabled(!canStart)
+                }
             }
             .padding()
             .navigationTitle("New Workout")
@@ -197,10 +241,73 @@ struct StartWorkoutView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showCopyFromSheet) {
+                CopyFromSessionSheet(viewModel: viewModel) { session in
+                    copyFromSession = session
+                    showCopyFromSheet = false
+                }
+            }
         }
     }
 
     private var canStart: Bool {
         !viewModel.effectiveGymName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+}
+
+// MARK: - Copy From Session Sheet
+
+struct CopyFromSessionSheet: View {
+    @Bindable var viewModel: WorkoutViewModel
+    var onSelect: (WorkoutSession) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var sessions: [WorkoutSession] = []
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if sessions.isEmpty {
+                    Text("No completed workouts yet")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(sessions) { session in
+                        Button {
+                            onSelect(session)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(session.gymName)
+                                        .font(.subheadline.bold())
+                                    Text("·")
+                                        .foregroundStyle(.secondary)
+                                    Text(session.workoutType.displayName)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                HStack {
+                                    Text(session.date, style: .date)
+                                    Text("·")
+                                    Text("\(session.exercises.count) exercises")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            .foregroundStyle(.primary)
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Copy From")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .onAppear {
+                sessions = viewModel.recentCompletedSessions()
+            }
+        }
     }
 }
