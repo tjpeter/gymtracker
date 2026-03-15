@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		13BA5D06D38C0E3682932763 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2EFC95D0C295AA0BF26BE1 /* Theme.swift */; };
 		164895CCACE538E2CCB37576 /* ExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D24008BD7724B953DF45C60 /* ExerciseCardView.swift */; };
 		305FF537379FB7B268D8DEBF /* WorkoutViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611E09BDC984285640B769E8 /* WorkoutViewModel.swift */; };
 		36B73594EBB7FE33D7F14FBC /* ProgressView_.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A615325E9CE91C0046010C1 /* ProgressView_.swift */; };
@@ -57,6 +58,7 @@
 		BA2D41FBC3D31BFBD1BA1DD5 /* DataExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExporter.swift; sourceTree = "<group>"; };
 		C5F6C3A9394C6F9B3FB9D98D /* HistoryDataImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryDataImporter.swift; sourceTree = "<group>"; };
 		D3E6BF46E47000C314652F7D /* WorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSession.swift; sourceTree = "<group>"; };
+		FF2EFC95D0C295AA0BF26BE1 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -128,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				3C9B185EE387C9F27547D06A /* GymTrackerApp.swift */,
+				FF2EFC95D0C295AA0BF26BE1 /* Theme.swift */,
 				79EEF5124243BE5FA7FB852E /* Data */,
 				D8C7049DA6B7E1E61550B446 /* Extensions */,
 				55B73AAF02777278AB77C175 /* Models */,
@@ -230,6 +233,7 @@
 				B1A6DD6E8598F66CB2DD9CDD /* RestTimerView.swift in Sources */,
 				B4B1D86A2AEEAA9E50D912B2 /* RestTimerViewModel.swift in Sources */,
 				DCB7F85C5D5346729F53218C /* StartWorkoutView.swift in Sources */,
+				13BA5D06D38C0E3682932763 /* Theme.swift in Sources */,
 				FC65F569F52874FDEDF64E44 /* WorkoutDetailView.swift in Sources */,
 				9F7329872B6A95F67DD89B3D /* WorkoutSession.swift in Sources */,
 				EFAD60CB4DECC9657A96E7F5 /* WorkoutSessionView.swift in Sources */,
