@@ -52,7 +52,7 @@ struct ExerciseCardView: View {
                         }
                         .foregroundStyle(.blue)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.borderless)
                 }
 
                 // Sets header
@@ -85,6 +85,7 @@ struct ExerciseCardView: View {
                         Label("Add Set", systemImage: "plus.circle")
                             .font(.caption)
                     }
+                    .buttonStyle(.borderless)
                     Spacer()
                     if exercise.sets.count > 1 {
                         Button(role: .destructive) {
@@ -95,6 +96,7 @@ struct ExerciseCardView: View {
                             Label("Remove Set", systemImage: "minus.circle")
                                 .font(.caption)
                         }
+                        .buttonStyle(.borderless)
                     }
                 }
                 .padding(.top, 4)
@@ -163,7 +165,7 @@ struct SetRowView: View {
                     .foregroundStyle(set.isWarmup ? .orange : .secondary)
                     .frame(width: 36)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
 
             Spacer()
 
@@ -177,7 +179,7 @@ struct SetRowView: View {
                         .foregroundStyle(.secondary)
                         .font(.body)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderless)
 
                 TextField("0", value: $set.weight, format: .number)
                     .keyboardType(.decimalPad)
@@ -194,7 +196,7 @@ struct SetRowView: View {
                         .foregroundStyle(.blue)
                         .font(.body)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderless)
             }
             .frame(width: 110)
 
@@ -208,7 +210,7 @@ struct SetRowView: View {
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderless)
 
                 TextField("0", value: $set.reps, format: .number)
                     .keyboardType(.numberPad)
@@ -225,7 +227,7 @@ struct SetRowView: View {
                         .foregroundStyle(.blue)
                         .font(.caption)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderless)
             }
             .frame(width: 70)
 
@@ -238,7 +240,7 @@ struct SetRowView: View {
                     .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))
                     .font(.title3)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .frame(width: 30)
         }
         .opacity(set.isWarmup ? 0.7 : 1.0)
