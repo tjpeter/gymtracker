@@ -168,18 +168,17 @@ struct HomeView: View {
         guard !completedSessions.isEmpty else { return 0 }
         let calendar = Calendar.current
         var streak = 0
-        var checkDate = Date()
+        var weekStart = calendar.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
 
-        for _ in 0..<30 {
-            let dayStart = calendar.startOfDay(for: checkDate)
-            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
-            let hasWorkout = completedSessions.contains { $0.date >= dayStart && $0.date < dayEnd }
+        for _ in 0..<52 {
+            let weekEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart)!
+            let hasWorkout = completedSessions.contains { $0.date >= weekStart && $0.date < weekEnd }
             if hasWorkout {
                 streak += 1
             } else if streak > 0 {
                 break
             }
-            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+            weekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: weekStart)!
         }
         return streak
     }
