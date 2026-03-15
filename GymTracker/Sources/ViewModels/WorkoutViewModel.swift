@@ -68,7 +68,8 @@ final class WorkoutViewModel {
                     let set = ExerciseSet(
                         setNumber: prevSet.setNumber,
                         reps: prevSet.reps,
-                        weight: prevSet.weight
+                        weight: prevSet.weight,
+                        isWarmup: prevSet.isWarmup
                     )
                     exercise.sets.append(set)
                 }
