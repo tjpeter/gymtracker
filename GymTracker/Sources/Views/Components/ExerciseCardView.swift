@@ -63,6 +63,9 @@ struct ExerciseCardView: View {
                         .frame(width: 110)
                     Text("Reps")
                         .frame(width: 70)
+                    Image(systemName: "checkmark")
+                        .font(.caption2.bold())
+                        .frame(width: 30)
                 }
                 .font(.caption2.bold())
                 .foregroundStyle(.secondary)
@@ -219,6 +222,18 @@ struct SetRowView: View {
                 .buttonStyle(.plain)
             }
             .frame(width: 70)
+
+            // Done toggle
+            Button {
+                set.isCompleted.toggle()
+                viewModel.autosave()
+            } label: {
+                Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))
+                    .font(.title3)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 30)
         }
         .opacity(set.isWarmup ? 0.7 : 1.0)
     }
