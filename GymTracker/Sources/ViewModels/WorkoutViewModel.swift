@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-@Observable
+@MainActor @Observable
 final class WorkoutViewModel {
     var selectedGymName: String = GymPreset.waedenswil.rawValue
     var selectedWorkoutType: WorkoutType = .a
@@ -55,8 +55,8 @@ final class WorkoutViewModel {
 
         if let prevExercises = previousExercises, !prevExercises.isEmpty {
             for (index, prev) in prevExercises.enumerated() {
-                let prevWeight = prev.sortedSets.first?.weight
-                let prevReps = prev.sortedSets.first?.reps
+                let prevWeight = prev.sortedSets.map(\.weight).max()
+                let prevReps = prev.sortedSets.first(where: { $0.weight == prevWeight })?.reps
                 let exercise = LoggedExercise(
                     name: prev.name,
                     order: index,
@@ -95,6 +95,7 @@ final class WorkoutViewModel {
     func completeWorkout() {
         guard let session = currentSession else { return }
         session.isCompleted = true
+        session.endDate = Date()
         for exercise in session.exercises {
             for set in exercise.sets {
                 set.isCompleted = true
@@ -196,6 +197,28 @@ final class WorkoutViewModel {
             }
         }
         return customNames
+    }
+
+    // MARK: - Exercise Names
+
+    func allExerciseNames() -> [String] {
+        guard let context = modelContext else { return [] }
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.isCompleted == true },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        guard let sessions = try? context.fetch(descriptor) else { return [] }
+        var names: [String] = []
+        var seen = Set<String>()
+        for session in sessions {
+            for exercise in session.exercises {
+                if !seen.contains(exercise.name) {
+                    names.append(exercise.name)
+                    seen.insert(exercise.name)
+                }
+            }
+        }
+        return names.sorted()
     }
 
     // MARK: - Delete Workout

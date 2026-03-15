@@ -7,11 +7,14 @@ struct HistoryView: View {
         sort: \WorkoutSession.date,
         order: .reverse
     ) private var sessions: [WorkoutSession]
+    @Query(sort: \BodyWeightEntry.date) private var bodyWeightEntries: [BodyWeightEntry]
     @Bindable var viewModel: WorkoutViewModel
     @State private var filterGymName: String?
     @State private var filterWorkout: WorkoutType?
     @State private var sessionToDelete: WorkoutSession?
     @State private var showDeleteAlert = false
+    @State private var showExportSheet = false
+    @State private var exportFileURL: URL?
 
     var allGymNames: [String] {
         var names: [String] = []
@@ -91,9 +94,15 @@ struct HistoryView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
-                            Text("\(session.exercises.count) exercises")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                            HStack {
+                                Text("\(session.exercises.count) exercises")
+                                if let duration = session.durationMinutes {
+                                    Text("·")
+                                    Text("\(duration) min")
+                                }
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                         }
                         .padding(.vertical, 4)
                     }
@@ -110,6 +119,33 @@ struct HistoryView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("History")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        exportFileURL = DataExporter.createCSVFile(sessions: sessions, bodyWeightEntries: bodyWeightEntries)
+                        if exportFileURL != nil { showExportSheet = true }
+                    } label: {
+                        Label("Export CSV", systemImage: "tablecells")
+                    }
+                    Button {
+                        exportFileURL = DataExporter.createJSONFile(sessions: sessions, bodyWeightEntries: bodyWeightEntries)
+                        if exportFileURL != nil { showExportSheet = true }
+                    } label: {
+                        Label("Export JSON", systemImage: "curlybraces")
+                    }
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .disabled(sessions.isEmpty)
+            }
+        }
+        .sheet(isPresented: $showExportSheet) {
+            if let url = exportFileURL {
+                ShareSheet(activityItems: [url])
+                    .presentationDetents([.medium, .large])
+            }
+        }
         .alert("Delete Workout?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 if let session = sessionToDelete {
@@ -126,6 +162,16 @@ struct HistoryView: View {
             }
         }
     }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 struct FilterChip: View {

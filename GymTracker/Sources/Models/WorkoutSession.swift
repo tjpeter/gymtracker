@@ -9,6 +9,7 @@ final class WorkoutSession {
     var workoutTypeRaw: String
     var notes: String
     var isCompleted: Bool
+    var endDate: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \LoggedExercise.session)
     var exercises: [LoggedExercise]
@@ -18,17 +19,23 @@ final class WorkoutSession {
         set { workoutTypeRaw = newValue.rawValue }
     }
 
+    var durationMinutes: Int? {
+        guard let end = endDate else { return nil }
+        return max(1, Int(end.timeIntervalSince(date) / 60))
+    }
+
     var sortedExercises: [LoggedExercise] {
         exercises.sorted { $0.order < $1.order }
     }
 
-    init(gymName: String, workoutType: WorkoutType, date: Date = Date(), notes: String = "", isCompleted: Bool = false) {
+    init(gymName: String, workoutType: WorkoutType, date: Date = Date(), notes: String = "", isCompleted: Bool = false, endDate: Date? = nil) {
         self.id = UUID()
         self.date = date
         self.gymName = gymName
         self.workoutTypeRaw = workoutType.rawValue
         self.notes = notes
         self.isCompleted = isCompleted
+        self.endDate = endDate
         self.exercises = []
     }
 }

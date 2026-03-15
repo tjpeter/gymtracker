@@ -49,7 +49,7 @@ struct BodyWeightView: View {
             if let latest = entries.first {
                 Section("Current") {
                     LabeledContent("Latest Weight") {
-                        Text("\(formatWeight(latest.weight)) kg")
+                        Text("\(latest.weight.formattedWeight) kg")
                             .font(.headline)
                     }
                     LabeledContent("Date") {
@@ -59,8 +59,7 @@ struct BodyWeightView: View {
                         let oldest = entries.last!
                         let change = latest.weight - oldest.weight
                         LabeledContent("Change (all time)") {
-                            Text("\(change >= 0 ? "+" : "")\(formatWeight(change)) kg")
-                                .foregroundStyle(change <= 0 ? .green : .red)
+                            Text("\(change >= 0 ? "+" : "")\(change.formattedWeight) kg")
                         }
                     }
                 }
@@ -84,7 +83,7 @@ struct BodyWeightView: View {
                                 }
                             }
                             Spacer()
-                            Text("\(formatWeight(entry.weight)) kg")
+                            Text("\(entry.weight.formattedWeight) kg")
                                 .font(.subheadline.bold())
                         }
                     }
@@ -145,11 +144,5 @@ struct BodyWeightView: View {
             modelContext.delete(entries[index])
         }
         try? modelContext.save()
-    }
-
-    private func formatWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0
-            ? String(format: "%.0f", weight)
-            : String(format: "%.1f", weight)
     }
 }

@@ -14,6 +14,9 @@ struct WorkoutDetailView: View {
                 LabeledContent("Time") {
                     Text(session.date, style: .time)
                 }
+                if let duration = session.durationMinutes {
+                    LabeledContent("Duration", value: "\(duration) min")
+                }
                 if !session.notes.isEmpty {
                     LabeledContent("Notes", value: session.notes)
                 }
@@ -38,7 +41,7 @@ struct WorkoutDetailView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Text("\(formatWeight(set.weight)) kg")
+                            Text("\(set.weight.formattedWeight) kg")
                                 .font(.subheadline.bold())
                             Text("×")
                                 .foregroundStyle(.secondary)
@@ -58,11 +61,5 @@ struct WorkoutDetailView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Workout Details")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func formatWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0
-            ? String(format: "%.0f", weight)
-            : String(format: "%.1f", weight)
     }
 }

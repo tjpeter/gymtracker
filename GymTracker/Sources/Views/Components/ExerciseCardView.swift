@@ -24,20 +24,34 @@ struct ExerciseCardView: View {
 
                 // Previous values
                 if let prevWeight = exercise.previousWeight {
-                    HStack {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.caption2)
-                            .foregroundStyle(.blue)
-                        Text("Previous: \(formatWeight(prevWeight)) kg")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
-                        if let prevReps = exercise.previousReps {
-                            Text("× \(prevReps)")
-                                .font(.caption)
-                                .foregroundStyle(.blue)
+                    Button {
+                        for set in exercise.sets {
+                            set.weight = prevWeight
+                            if let prevReps = exercise.previousReps {
+                                set.reps = prevReps
+                            }
                         }
-                        Spacer()
+                        viewModel.autosave()
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.caption2)
+                            Text("Previous: \(prevWeight.formattedWeight) kg")
+                                .font(.caption)
+                            if let prevReps = exercise.previousReps {
+                                Text("× \(prevReps)")
+                                    .font(.caption)
+                            }
+                            Spacer()
+                            Text("Apply")
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(.blue.opacity(0.15)))
+                        }
+                        .foregroundStyle(.blue)
                     }
+                    .buttonStyle(.plain)
                 }
 
                 // Sets header
@@ -56,7 +70,7 @@ struct ExerciseCardView: View {
 
                 // Individual sets
                 ForEach(exercise.sortedSets) { set in
-                    SetRowView(set: set)
+                    SetRowView(set: set, viewModel: viewModel)
                 }
 
                 // Add/remove set buttons
@@ -98,6 +112,13 @@ struct ExerciseCardView: View {
                         .onTapGesture(count: 2) {
                             isEditingName = true
                         }
+                        .contextMenu {
+                            Button {
+                                isEditingName = true
+                            } label: {
+                                Label("Rename", systemImage: "pencil")
+                            }
+                        }
                 }
                 Spacer()
                 Text("\(exercise.sets.count) sets")
@@ -113,18 +134,13 @@ struct ExerciseCardView: View {
             }
         }
     }
-
-    private func formatWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0
-            ? String(format: "%.0f", weight)
-            : String(format: "%.1f", weight)
-    }
 }
 
 // MARK: - Set Row
 
 struct SetRowView: View {
     @Bindable var set: ExerciseSet
+    @Bindable var viewModel: WorkoutViewModel
 
     var body: some View {
         HStack {
@@ -139,6 +155,7 @@ struct SetRowView: View {
             HStack(spacing: 4) {
                 Button {
                     set.weight = max(0, set.weight - 2.5)
+                    viewModel.autosave()
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
@@ -155,6 +172,7 @@ struct SetRowView: View {
 
                 Button {
                     set.weight += 2.5
+                    viewModel.autosave()
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
@@ -168,6 +186,7 @@ struct SetRowView: View {
             HStack(spacing: 4) {
                 Button {
                     set.reps = max(0, set.reps - 1)
+                    viewModel.autosave()
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
@@ -184,6 +203,7 @@ struct SetRowView: View {
 
                 Button {
                     set.reps += 1
+                    viewModel.autosave()
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)

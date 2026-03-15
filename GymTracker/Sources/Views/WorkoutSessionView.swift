@@ -7,6 +7,7 @@ struct WorkoutSessionView: View {
     @State private var showAddExercise = false
     @State private var showDiscardAlert = false
     @State private var showCompleteAlert = false
+    @State private var restTimer = RestTimerViewModel()
 
     var body: some View {
         Group {
@@ -37,6 +38,13 @@ struct WorkoutSessionView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    }
+
+                    // Rest timer
+                    Section {
+                        RestTimerView(timer: restTimer)
+                    } header: {
+                        Text("Rest Timer")
                     }
 
                     // Exercises
@@ -86,6 +94,7 @@ struct WorkoutSessionView: View {
                             .padding(.vertical, 8)
                         }
                         .tint(.green)
+                        .disabled(session.exercises.isEmpty)
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -111,6 +120,7 @@ struct WorkoutSessionView: View {
         }
         .alert("Complete Workout?", isPresented: $showCompleteAlert) {
             Button("Complete", role: .none) {
+                restTimer.stop()
                 viewModel.completeWorkout()
                 dismiss()
             }
@@ -120,6 +130,7 @@ struct WorkoutSessionView: View {
         }
         .alert("Discard Workout?", isPresented: $showDiscardAlert) {
             Button("Discard", role: .destructive) {
+                restTimer.stop()
                 viewModel.discardWorkout()
                 dismiss()
             }
@@ -131,6 +142,9 @@ struct WorkoutSessionView: View {
             if newPhase == .background || newPhase == .inactive {
                 viewModel.autosave()
             }
+        }
+        .onAppear {
+            RestTimerViewModel.requestNotificationPermission()
         }
     }
 }
@@ -144,12 +158,34 @@ struct AddExerciseSheet: View {
     @State private var sets = 3
     @State private var reps = 10
     @State private var weight: Double = 0
+    @State private var knownNames: [String] = []
+
+    var suggestions: [String] {
+        guard !name.isEmpty else { return [] }
+        let query = name.lowercased()
+        return knownNames.filter { $0.lowercased().contains(query) }.prefix(5).map { $0 }
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Exercise") {
                     TextField("Exercise name", text: $name)
+                    if !suggestions.isEmpty {
+                        ForEach(suggestions, id: \.self) { suggestion in
+                            Button {
+                                name = suggestion
+                            } label: {
+                                HStack {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(suggestion)
+                                        .foregroundStyle(.primary)
+                                }
+                            }
+                        }
+                    }
                 }
                 Section("Details") {
                     Stepper("Sets: \(sets)", value: $sets, in: 1...10)
@@ -180,6 +216,9 @@ struct AddExerciseSheet: View {
                     }
                     .disabled(name.isEmpty)
                 }
+            }
+            .onAppear {
+                knownNames = viewModel.allExerciseNames()
             }
         }
     }

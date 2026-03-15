@@ -9,10 +9,16 @@ struct ProgressView_: View {
         order: .reverse
     ) private var sessions: [WorkoutSession]
     @State private var selectedExercise: String?
+    @State private var selectedGym: String?
+
+    var filteredSessions: [WorkoutSession] {
+        guard let gym = selectedGym else { return sessions }
+        return sessions.filter { $0.gymName == gym }
+    }
 
     var allExerciseNames: [String] {
         var names = Set<String>()
-        for session in sessions {
+        for session in filteredSessions {
             for exercise in session.exercises {
                 names.insert(exercise.name)
             }
@@ -56,6 +62,15 @@ struct ProgressView_: View {
             }
 
             Section("Exercise Progress") {
+                if allGymNames.count > 1 {
+                    Picker("Gym", selection: $selectedGym) {
+                        Text("All Gyms").tag(nil as String?)
+                        ForEach(allGymNames, id: \.self) { name in
+                            Text(name).tag(name as String?)
+                        }
+                    }
+                }
+
                 if allExerciseNames.isEmpty {
                     Text("Complete workouts to track progress")
                         .foregroundStyle(.secondary)
@@ -90,7 +105,7 @@ struct ProgressView_: View {
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text("\(formatWeight(point.maxWeight)) kg")
+                                Text("\(point.maxWeight.formattedWeight) kg")
                                     .font(.subheadline.bold())
                                 Text("\(point.totalSets) sets")
                                     .font(.caption)
@@ -117,7 +132,7 @@ struct ProgressView_: View {
 
     private func exerciseDataPoints(for name: String) -> [ExerciseDataPoint] {
         var points: [ExerciseDataPoint] = []
-        for session in sessions.sorted(by: { $0.date < $1.date }) {
+        for session in filteredSessions.sorted(by: { $0.date < $1.date }) {
             for exercise in session.exercises where exercise.name == name {
                 let maxWeight = exercise.sortedSets.map(\.weight).max() ?? 0
                 let totalSets = exercise.sets.count
@@ -130,12 +145,6 @@ struct ProgressView_: View {
             }
         }
         return points
-    }
-
-    private func formatWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0
-            ? String(format: "%.0f", weight)
-            : String(format: "%.1f", weight)
     }
 }
 
