@@ -130,9 +130,17 @@ struct ExerciseCardView: View {
                         }
                 }
                 Spacer()
-                Text("\(exercise.sets.count) sets")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                let warmupCount = exercise.sets.filter(\.isWarmup).count
+                let workingCount = exercise.sets.count - warmupCount
+                if warmupCount > 0 {
+                    Text("\(workingCount) sets + \(warmupCount)W")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("\(exercise.sets.count) sets")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
