@@ -292,29 +292,46 @@ Also:
 - use realistic defaults
 - seed initial templates on first launch
 
+## Implemented set features
+
+### Set management
+- Sets can be added and removed from any exercise during a session
+- Add set appends a new set with values copied from the last set
+- Remove set deletes the last set (minimum one set per exercise)
+
+### Warmup sets
+- Any set can be marked as a warmup by tapping the set number
+- Warmup sets display "W" in orange with reduced opacity
+- Warmup status is persisted via the `isWarmup` property on `ExerciseSet` (default: `false`)
+
+### Set completion tracking
+- Each set has an explicit done/not-done toggle (checkmark)
+- Completion is independent of whether weight/reps are prefilled
+- Persisted via the `isCompleted` property on `ExerciseSet` (default: `false`)
+
+### Collapsible exercise groups
+- Each exercise's set group can be collapsed/expanded individually
+- A global collapse/expand toggle in the exercises header controls all exercises at once
+
+### Keyboard dismissal
+- Swipe down on scrollable screens to dismiss the keyboard while editing text fields
+
+## Data compatibility constraints
+- Workout history must be preserved across updates
+- New persisted properties must have safe defaults so older saved data loads without crashes
+- Do not wipe local storage or rename/remove existing persisted fields without safe migration
+- The `isWarmup` and `isCompleted` fields on `ExerciseSet` default to `false` for backward compatibility
+
 ## Nice-to-have features
 Only add these if they do not complicate the app too much:
 - duplicate previous workout
 - mark favorite exercises
-- notes per session
 - PR/highest weight indicators
-- quick increment/decrement buttons for weight
-- rest timer
 
 ## Important constraints
-- Keep the first version focused and usable
+- Keep the app focused and usable
 - Prioritize reliability and speed of logging over feature bloat
 - Do not build a backend
 - Do not add user accounts
 - Do not add unnecessary abstractions
-- The app should feel like a real usable MVP, not a prototype
-
-## Deliverables
-I want:
-1. the full SwiftUI app code
-2. a short README
-3. a brief explanation of the project structure
-4. a note listing any assumptions you made while interpreting the workout plan and images
-
-Start by examining the markdown file and images, then implement the app accordingly.
-Act as a senior iOS engineer and product designer. Build the app end-to-end in SwiftUI using SwiftData. Make pragmatic decisions, keep the MVP lean, and optimize for fast workout logging in the gym.
+- The app should feel like a real usable product, not a prototype
