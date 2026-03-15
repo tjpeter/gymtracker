@@ -98,6 +98,7 @@ struct WorkoutSessionView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollDismissesKeyboard(.interactively)
             } else {
                 ContentUnavailableView("No Active Workout", systemImage: "figure.walk", description: Text("Start a workout from the home screen"))
             }
@@ -202,6 +203,7 @@ struct AddExerciseSheet: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Add Exercise")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

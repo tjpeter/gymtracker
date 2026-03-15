@@ -113,6 +113,7 @@ struct BodyWeightView: View {
                         TextField("Notes (optional)", text: $newNotes)
                     }
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .navigationTitle("Log Weight")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
