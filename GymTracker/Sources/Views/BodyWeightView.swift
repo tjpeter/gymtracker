@@ -26,6 +26,9 @@ struct BodyWeightView: View {
             if entries.count >= 2 {
                 Section("Trend") {
                     let sorted = entries.sorted { $0.date < $1.date }
+                    let weights = sorted.map(\.weight)
+                    let minW = (weights.min() ?? 0) - 1
+                    let maxW = (weights.max() ?? 100) + 1
                     Chart(sorted) { entry in
                         LineMark(
                             x: .value("Date", entry.date),
@@ -40,6 +43,7 @@ struct BodyWeightView: View {
                         )
                         .foregroundStyle(.orange)
                     }
+                    .chartYScale(domain: minW...maxW)
                     .chartYAxisLabel("kg")
                     .frame(height: 200)
                 }
