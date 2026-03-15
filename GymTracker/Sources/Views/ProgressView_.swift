@@ -10,6 +10,7 @@ struct ProgressView_: View {
     ) private var sessions: [WorkoutSession]
     @State private var selectedExercise: String?
     @State private var selectedGym: String?
+    @State private var showVolume = false
 
     var filteredSessions: [WorkoutSession] {
         guard let gym = selectedGym else { return sessions }
@@ -87,9 +88,18 @@ struct ProgressView_: View {
             if let exerciseName = selectedExercise {
                 let dataPoints = exerciseDataPoints(for: exerciseName)
                 if dataPoints.count >= 2 {
-                    Section("Weight Progress: \(exerciseName)") {
-                        ExerciseProgressChart(dataPoints: dataPoints)
+                    Section {
+                        Picker("Metric", selection: $showVolume) {
+                            Text("Max Weight").tag(false)
+                            Text("Volume").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+
+                        ExerciseProgressChart(dataPoints: dataPoints, showVolume: showVolume)
                             .frame(height: 200)
+                    } header: {
+                        Text("\(showVolume ? "Volume" : "Weight") Progress: \(exerciseName)")
                     }
                 }
 
@@ -107,9 +117,13 @@ struct ProgressView_: View {
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("\(point.maxWeight.formattedWeight) kg")
                                     .font(.subheadline.bold())
-                                Text("\(point.totalSets) sets")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 4) {
+                                    Text("\(point.totalSets) sets")
+                                    Text("·")
+                                    Text("\(Int(point.volume)) kg vol")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             }
                             if point.maxWeight == dataPoints.map(\.maxWeight).max() {
                                 Image(systemName: "trophy.fill")
@@ -134,12 +148,15 @@ struct ProgressView_: View {
         var points: [ExerciseDataPoint] = []
         for session in filteredSessions.sorted(by: { $0.date < $1.date }) {
             for exercise in session.exercises where exercise.name == name {
-                let maxWeight = exercise.sortedSets.map(\.weight).max() ?? 0
-                let totalSets = exercise.sets.count
+                let workingSets = exercise.sortedSets.filter { !$0.isWarmup }
+                let maxWeight = workingSets.map(\.weight).max() ?? exercise.sortedSets.map(\.weight).max() ?? 0
+                let totalSets = workingSets.count
+                let volume = workingSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
                 points.append(ExerciseDataPoint(
                     date: session.date,
                     maxWeight: maxWeight,
                     totalSets: totalSets,
+                    volume: volume,
                     gym: session.gymName
                 ))
             }
@@ -153,28 +170,31 @@ struct ExerciseDataPoint: Identifiable {
     let date: Date
     let maxWeight: Double
     let totalSets: Int
+    let volume: Double
     let gym: String
 }
 
 struct ExerciseProgressChart: View {
     let dataPoints: [ExerciseDataPoint]
+    var showVolume = false
 
     var body: some View {
         Chart(dataPoints) { point in
+            let yValue = showVolume ? point.volume : point.maxWeight
             LineMark(
                 x: .value("Date", point.date),
-                y: .value("Weight", point.maxWeight)
+                y: .value(showVolume ? "Volume" : "Weight", yValue)
             )
             .interpolationMethod(.catmullRom)
-            .foregroundStyle(.blue)
+            .foregroundStyle(showVolume ? .orange : .blue)
 
             PointMark(
                 x: .value("Date", point.date),
-                y: .value("Weight", point.maxWeight)
+                y: .value(showVolume ? "Volume" : "Weight", yValue)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(showVolume ? .orange : .blue)
         }
-        .chartYAxisLabel("kg")
+        .chartYAxisLabel(showVolume ? "kg total" : "kg")
     }
 }
 
