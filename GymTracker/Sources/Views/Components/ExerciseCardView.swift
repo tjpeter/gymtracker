@@ -75,7 +75,9 @@ struct ExerciseCardView: View {
                     SetRowView(
                         set: set,
                         viewModel: viewModel,
-                        workingSetNumber: workingSetNumber(for: set, in: sorted)
+                        workingSetNumber: workingSetNumber(for: set, in: sorted),
+                        previousWeight: exercise.previousWeight,
+                        previousReps: exercise.previousReps
                     )
                 }
 
@@ -209,6 +211,8 @@ struct SetRowView: View {
     @Bindable var set: ExerciseSet
     @Bindable var viewModel: WorkoutViewModel
     var workingSetNumber: Int
+    var previousWeight: Double?
+    var previousReps: Int?
 
     var body: some View {
         HStack {
@@ -238,7 +242,7 @@ struct SetRowView: View {
                 }
                 .buttonStyle(.borderless)
 
-                TextField("0", value: $set.weight, format: .number)
+                TextField(previousWeight.map { $0.formattedWeight } ?? "0", value: $set.weight, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
                     .frame(width: 50)
@@ -269,7 +273,7 @@ struct SetRowView: View {
                 }
                 .buttonStyle(.borderless)
 
-                TextField("0", value: $set.reps, format: .number)
+                TextField(previousReps.map { "\($0)" } ?? "0", value: $set.reps, format: .number)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
                     .frame(width: 32)
