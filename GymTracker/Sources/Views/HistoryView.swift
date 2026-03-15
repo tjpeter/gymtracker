@@ -190,6 +190,6 @@ struct FilterChip: View {
                 )
                 .foregroundStyle(isSelected ? .white : .primary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
     }
 }
