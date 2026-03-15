@@ -362,6 +362,7 @@ Also:
 - Volume calculation excludes warmup sets
 - Searchable exercise list replaces the picker for easier navigation
 - Exercises sorted by training frequency (most trained first)
+- Exercises grouped by workout type (Workout A, Workout B, Both) with color-coded section headers
 - Exercise frequency count shown next to each exercise name
 - Workout frequency chart shows weekly training distribution
 - PR reference line (dashed yellow) on exercise progress charts
