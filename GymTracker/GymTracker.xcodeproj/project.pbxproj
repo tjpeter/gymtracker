@@ -18,6 +18,7 @@
 		7285DA4680CE8E230B57AB49 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6358D349E7B12CA480F9F4 /* HomeView.swift */; };
 		757AE40E011135FF93F89C2B /* Double+Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B80DBA692F584940F3C258D /* Double+Format.swift */; };
 		82FC107FF74DA71B0543F49B /* ExerciseSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C7A08468501C117D87D1624 /* ExerciseSet.swift */; };
+		8E9C7CEF701B9E26D842770A /* CustomTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92AE0ADF31A820FD5DC1AB4 /* CustomTemplate.swift */; };
 		955335B383A432A51C530825 /* HistoryDataImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6C3A9394C6F9B3FB9D98D /* HistoryDataImporter.swift */; };
 		99B6B2660205BB23AE65F9AE /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252AD4DBF22FD3CCA8DB4AC9 /* Enums.swift */; };
 		9C50DAF6FB403660F2C743D8 /* BodyWeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58FC302A8DE68AD81A6D8D37 /* BodyWeightView.swift */; };
@@ -58,6 +59,7 @@
 		BA2D41FBC3D31BFBD1BA1DD5 /* DataExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExporter.swift; sourceTree = "<group>"; };
 		C5F6C3A9394C6F9B3FB9D98D /* HistoryDataImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryDataImporter.swift; sourceTree = "<group>"; };
 		D3E6BF46E47000C314652F7D /* WorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSession.swift; sourceTree = "<group>"; };
+		D92AE0ADF31A820FD5DC1AB4 /* CustomTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTemplate.swift; sourceTree = "<group>"; };
 		FF2EFC95D0C295AA0BF26BE1 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -98,6 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				2FAE41F469D6BD0447ECACCA /* BodyWeightEntry.swift */,
+				D92AE0ADF31A820FD5DC1AB4 /* CustomTemplate.swift */,
 				252AD4DBF22FD3CCA8DB4AC9 /* Enums.swift */,
 				5C7A08468501C117D87D1624 /* ExerciseSet.swift */,
 				8A881B372E0FA39C220AF7DF /* LoggedExercise.swift */,
@@ -218,6 +221,7 @@
 			files = (
 				E32E49AB8FC0423A4A459ADF /* BodyWeightEntry.swift in Sources */,
 				9C50DAF6FB403660F2C743D8 /* BodyWeightView.swift in Sources */,
+				8E9C7CEF701B9E26D842770A /* CustomTemplate.swift in Sources */,
 				4413878F4A2B34E47DA3CBE9 /* DataExporter.swift in Sources */,
 				757AE40E011135FF93F89C2B /* Double+Format.swift in Sources */,
 				99B6B2660205BB23AE65F9AE /* Enums.swift in Sources */,
