@@ -341,33 +341,41 @@ Also:
 - Always visible while scrolling through exercises
 - Preset intervals (60s/90s/120s) and custom duration
 - Auto-start option: when enabled, timer starts automatically on set completion using last-used duration
+- Pause/resume support with separate stop button
+- Shows "PAUSED" text on circular indicator when paused; minimized pill shows pause icon
 - Uses `NotificationCenter` (.setCompleted) for cross-view communication
 
 ### Workout completion summary
 - Post-workout summary screen shown after completing a workout
 - Displays duration, total sets, total volume, PR count
-- Per-exercise breakdown with set counts and volume
+- Per-exercise breakdown with set counts, volume, and average RPE
+- 5-star session rating
+- "Save as Template" button to create reusable workout templates
 - Animated hero with spring scale-in effect
 - PR celebration banner when PRs are hit
 - Presented as `.sheet(item:)` with `.interactiveDismissDisabled()`
 
 ### Editable workout history
 - WorkoutDetailView has Edit/Done toolbar button
-- In edit mode: inline editing of weights, reps, exercise names, and notes
+- Summary stats grid at top (duration, working sets, volume, PR count)
+- In edit mode: inline editing of weights, reps, exercise names, notes, and rating
 - Changes saved to SwiftData on Done
 - Keyboard Done toolbar button in edit mode
 
 ### Progress tracking
-- Exercise progress charts with toggle between max weight and volume (sets × reps × weight)
+- Exercise progress charts with toggle between max weight, volume, and estimated 1RM
 - Volume calculation excludes warmup sets
 - Searchable exercise list replaces the picker for easier navigation
 - Exercises sorted by training frequency (most trained first)
 - Exercises grouped by workout type (Workout A, Workout B, Both) with color-coded section headers
 - Exercise frequency count shown next to each exercise name
 - Workout frequency chart shows weekly training distribution
+- Workout duration trend chart (green line/area) below frequency chart
 - PR reference line (dashed yellow) on exercise progress charts
 - Area fill under chart line marks for premium appearance
 - Trend direction indicator (up/down/flat) badge on charts
+- Date range filtering (1M/3M/6M/All) on progress and history views
+- Plateau detection badge when max weight unchanged over 4+ sessions
 
 ### Collapsible exercise groups
 - Each exercise's set group can be collapsed/expanded individually
@@ -379,9 +387,12 @@ Also:
 
 ### Body weight chart
 - Y-axis auto-scales to data range (min-1 to max+1) for visible trends
+- 7-day moving average line (blue) overlaid on daily data (orange)
+- Chart legend distinguishes "Daily" from "7-day avg"
 
 ### Copy from previous workout
 - "Copy from..." button in StartWorkoutView lets users pick any previous session as starting point
+- "Template" button lets users pick a saved workout template
 - Default auto-fill from matching gym+workout combo remains the primary flow
 - Supports cross-gym copying (e.g., copy Kreuzlingen workout to use at a new gym)
 
