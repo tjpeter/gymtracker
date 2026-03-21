@@ -8,6 +8,7 @@ final class LoggedExercise {
     var order: Int
     var machineName: String
     var notes: String
+    var supersetGroupId: UUID?
 
     @Relationship(deleteRule: .cascade, inverse: \ExerciseSet.exercise)
     var sets: [ExerciseSet]

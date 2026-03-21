@@ -413,11 +413,79 @@ Also:
 - Banner auto-dismisses after 4 seconds with animation
 - Uses `NotificationCenter` (.exerciseDeleted) for cross-view communication
 
+### RPE tracking
+- Each set has an optional RPE (Rate of Perceived Exertion) badge, range 6.0-10.0 in 0.5 steps
+- Tap to cycle through values; appears after set is completed or when RPE is already set
+- Color-coded: green (<7.5), yellow (<8.5), orange (<9.5), red (10)
+- Displayed in workout summary per-exercise breakdown and workout detail history
+- Persisted via `rpe: Double?` on `ExerciseSet` (default: `nil`)
+
+### Session rating
+- 5-star tappable rating on post-workout summary screen
+- Rating displayed in history list rows and workout detail header
+- Editable in workout detail edit mode
+- Persisted via `rating: Int?` on `WorkoutSession` (default: `nil`)
+
+### Rest timer pause/resume
+- Timer can be paused and resumed during rest
+- Pause saves remaining time, cancels scheduled notification
+- Resume restarts timer with saved remaining time, reschedules notification
+- Shows "PAUSED" text on circular indicator when paused
+- Minimized pill shows pause icon with yellow color when paused
+
+### Superset grouping
+- Exercises can be linked as supersets via context menu or swipe action
+- Linked exercises share a `supersetGroupId: UUID?` on `LoggedExercise`
+- Purple link icon shown on grouped exercises
+- Unlinking removes the group; if only one exercise remains, it auto-unlinks
+
+### Notes icon when collapsed
+- Small note icon (`text.bubble`) appears next to exercise name when notes are present
+- Visible in collapsed state for quick reference
+
+### Date range filtering
+- Segmented picker (1M/3M/6M/All) on both ProgressView and HistoryView
+- Filters all chart data, exercise history, and workout lists by date range
+
+### Workout duration trend chart
+- Green line/area chart showing workout duration (minutes) per session over time
+- Filterable by gym and time range
+- Displayed in ProgressView below workout frequency chart
+
+### 1RM estimation
+- "Est. 1RM" as third metric option in exercise progress charts
+- Calculated using Epley formula: `weight × (1 + reps/30)`
+- Uses best (highest 1RM) working set per session
+- Purple chart color for 1RM metric
+
+### Plateau detection
+- Orange warning badge on exercise chart when max weight hasn't increased over 4+ sessions
+- Shows "Plateau — no weight increase in last N sessions"
+
+### Body weight moving average
+- 7-day moving average line overlaid on body weight chart
+- Blue bold line for moving average, orange semi-transparent for daily data
+- Chart legend distinguishes "Daily" from "7-day avg"
+
+### Summary stats in history detail
+- Summary section at top of WorkoutDetailView showing duration, working sets, volume, PR count
+- Grid layout with color-coded stat cards matching workout summary style
+
+### Workout templates
+- Save any completed workout as a reusable template from the post-workout summary screen
+- Templates stored as `CustomTemplate` + `TemplateExercise` SwiftData models
+- Template picker accessible from StartWorkoutView alongside "Copy from..." option
+- Templates can be deleted via swipe action
+- Starting a workout from a template pre-fills exercises with saved weights/reps
+
 ## Data compatibility constraints
 - Workout history must be preserved across updates
 - New persisted properties must have safe defaults so older saved data loads without crashes
 - Do not wipe local storage or rename/remove existing persisted fields without safe migration
 - The `isWarmup` and `isCompleted` fields on `ExerciseSet` default to `false` for backward compatibility
+- The `rpe` field on `ExerciseSet` defaults to `nil` for backward compatibility
+- The `rating` field on `WorkoutSession` defaults to `nil` for backward compatibility
+- The `supersetGroupId` field on `LoggedExercise` defaults to `nil` for backward compatibility
 
 ## Project structure
 
@@ -429,6 +497,7 @@ GymTracker/
 │   ├── Models/
 │   │   ├── WorkoutSession.swift     # SwiftData models
 │   │   ├── BodyWeightEntry.swift    # Body weight model
+│   │   ├── CustomTemplate.swift    # User-saved workout templates
 │   │   └── WorkoutTemplates.swift   # Default exercise templates
 │   ├── ViewModels/
 │   │   ├── WorkoutViewModel.swift   # Core workout logic

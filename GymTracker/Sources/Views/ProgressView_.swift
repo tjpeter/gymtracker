@@ -10,12 +10,44 @@ struct ProgressView_: View {
     ) private var sessions: [WorkoutSession]
     @State private var selectedExercise: String?
     @State private var selectedGym: String?
-    @State private var showVolume = false
+    @State private var metricSelection: MetricSelection = .maxWeight
     @State private var exerciseSearch = ""
+    @State private var timeRange: TimeRange = .all
+
+    enum TimeRange: String, CaseIterable, Identifiable {
+        case oneMonth = "1M"
+        case threeMonths = "3M"
+        case sixMonths = "6M"
+        case all = "All"
+        var id: String { rawValue }
+
+        var startDate: Date? {
+            let cal = Calendar.current
+            switch self {
+            case .oneMonth: return cal.date(byAdding: .month, value: -1, to: Date())
+            case .threeMonths: return cal.date(byAdding: .month, value: -3, to: Date())
+            case .sixMonths: return cal.date(byAdding: .month, value: -6, to: Date())
+            case .all: return nil
+            }
+        }
+    }
+
+    enum MetricSelection: String, CaseIterable, Identifiable {
+        case maxWeight = "Max Weight"
+        case volume = "Volume"
+        case estimated1RM = "Est. 1RM"
+        var id: String { rawValue }
+    }
 
     var filteredSessions: [WorkoutSession] {
-        guard let gym = selectedGym else { return sessions }
-        return sessions.filter { $0.gymName == gym }
+        var result = sessions
+        if let gym = selectedGym {
+            result = result.filter { $0.gymName == gym }
+        }
+        if let start = timeRange.startDate {
+            result = result.filter { $0.date >= start }
+        }
+        return result
     }
 
     var allExerciseNames: [String] {
@@ -65,6 +97,17 @@ struct ProgressView_: View {
 
     var body: some View {
         List {
+            // Time range filter
+            Section {
+                Picker("Time Range", selection: $timeRange) {
+                    ForEach(TimeRange.allCases) { range in
+                        Text(range.rawValue).tag(range)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            }
+
             Section("Overview") {
                 LabeledContent("Total Workouts", value: "\(sessions.count)")
 
@@ -85,10 +128,49 @@ struct ProgressView_: View {
                 }
             }
 
-            if sessions.count >= 2 {
+            if filteredSessions.count >= 2 {
                 Section("Workout Frequency") {
-                    WorkoutFrequencyChart(sessions: sessions)
+                    WorkoutFrequencyChart(sessions: filteredSessions)
                         .frame(height: 200)
+                }
+
+                Section("Workout Duration") {
+                    let durationData = filteredSessions
+                        .filter { $0.durationMinutes != nil }
+                        .sorted { $0.date < $1.date }
+                    if durationData.count >= 2 {
+                        Chart(durationData) { session in
+                            AreaMark(
+                                x: .value("Date", session.date),
+                                y: .value("Minutes", session.durationMinutes ?? 0)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color.green.opacity(0.2), Color.green.opacity(0.02)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            LineMark(
+                                x: .value("Date", session.date),
+                                y: .value("Minutes", session.durationMinutes ?? 0)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(.green)
+                            .lineStyle(StrokeStyle(lineWidth: 2.5))
+                            PointMark(
+                                x: .value("Date", session.date),
+                                y: .value("Minutes", session.durationMinutes ?? 0)
+                            )
+                            .foregroundStyle(.green)
+                        }
+                        .chartYAxisLabel("minutes")
+                        .frame(height: 200)
+                    } else {
+                        Text("Complete more workouts to see duration trends")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -158,17 +240,36 @@ struct ProgressView_: View {
                 let dataPoints = exerciseDataPoints(for: exerciseName)
                 if dataPoints.count >= 2 {
                     Section {
-                        Picker("Metric", selection: $showVolume) {
-                            Text("Max Weight").tag(false)
-                            Text("Volume").tag(true)
+                        Picker("Metric", selection: $metricSelection) {
+                            ForEach(MetricSelection.allCases) { metric in
+                                Text(metric.rawValue).tag(metric)
+                            }
                         }
                         .pickerStyle(.segmented)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
 
-                        ExerciseProgressChart(dataPoints: dataPoints, showVolume: showVolume)
+                        ExerciseProgressChart(dataPoints: dataPoints, metricSelection: metricSelection)
                             .frame(height: 200)
+
+                        // Plateau detection
+                        if dataPoints.count >= 4 {
+                            let recentWeights = dataPoints.suffix(4).map(\.maxWeight)
+                            let maxRecent = recentWeights.max() ?? 0
+                            let minRecent = recentWeights.min() ?? 0
+                            if maxRecent - minRecent < 1.0 {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                    Text("Plateau — no weight increase in last \(min(dataPoints.count, 4)) sessions")
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
                     } header: {
-                        Text("\(showVolume ? "Volume" : "Weight") Progress: \(exerciseName)")
+                        Text("\(metricSelection.rawValue) Progress: \(exerciseName)")
                     }
                 }
 
@@ -223,11 +324,14 @@ struct ProgressView_: View {
                 let maxWeight = workingSets.map(\.weight).max() ?? exercise.sortedSets.map(\.weight).max() ?? 0
                 let totalSets = workingSets.count
                 let volume = workingSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+                // Epley formula: weight × (1 + reps/30)
+                let best1RM = workingSets.map { $0.weight * (1.0 + Double($0.reps) / 30.0) }.max() ?? 0
                 points.append(ExerciseDataPoint(
                     date: session.date,
                     maxWeight: maxWeight,
                     totalSets: totalSets,
                     volume: volume,
+                    estimated1RM: best1RM,
                     gym: session.gymName
                 ))
             }
@@ -242,31 +346,47 @@ struct ExerciseDataPoint: Identifiable {
     let maxWeight: Double
     let totalSets: Int
     let volume: Double
+    let estimated1RM: Double
     let gym: String
 }
 
 struct ExerciseProgressChart: View {
     let dataPoints: [ExerciseDataPoint]
-    var showVolume = false
+    var metricSelection: ProgressView_.MetricSelection = .maxWeight
+
+    private func metricValue(_ point: ExerciseDataPoint) -> Double {
+        switch metricSelection {
+        case .maxWeight: return point.maxWeight
+        case .volume: return point.volume
+        case .estimated1RM: return point.estimated1RM
+        }
+    }
 
     private var prValue: Double {
-        dataPoints.map { showVolume ? $0.volume : $0.maxWeight }.max() ?? 0
+        dataPoints.map { metricValue($0) }.max() ?? 0
     }
 
     private var trendDirection: TrendDirection {
         guard dataPoints.count >= 2 else { return .flat }
         let recent = Array(dataPoints.suffix(3))
         let older = Array(dataPoints.prefix(max(1, dataPoints.count - 3)))
-        let recentAvg = recent.map { showVolume ? $0.volume : $0.maxWeight }.reduce(0, +) / Double(recent.count)
-        let olderAvg = older.map { showVolume ? $0.volume : $0.maxWeight }.reduce(0, +) / Double(older.count)
+        let recentAvg = recent.map { metricValue($0) }.reduce(0, +) / Double(recent.count)
+        let olderAvg = older.map { metricValue($0) }.reduce(0, +) / Double(older.count)
         let diff = recentAvg - olderAvg
         if diff > olderAvg * 0.02 { return .up }
         if diff < -olderAvg * 0.02 { return .down }
         return .flat
     }
 
+    private var chartColor: Color {
+        switch metricSelection {
+        case .maxWeight: return .blue
+        case .volume: return .orange
+        case .estimated1RM: return .purple
+        }
+    }
+
     var body: some View {
-        let chartColor: Color = showVolume ? .orange : .blue
         VStack(alignment: .trailing, spacing: 4) {
             // Trend badge
             HStack(spacing: 4) {
@@ -282,11 +402,11 @@ struct ExerciseProgressChart: View {
 
             Chart {
                 ForEach(dataPoints) { point in
-                    let yValue = showVolume ? point.volume : point.maxWeight
+                    let yValue = metricValue(point)
 
                     AreaMark(
                         x: .value("Date", point.date),
-                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                        y: .value(metricSelection.rawValue, yValue)
                     )
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(
@@ -299,7 +419,7 @@ struct ExerciseProgressChart: View {
 
                     LineMark(
                         x: .value("Date", point.date),
-                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                        y: .value(metricSelection.rawValue, yValue)
                     )
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(chartColor)
@@ -307,7 +427,7 @@ struct ExerciseProgressChart: View {
 
                     PointMark(
                         x: .value("Date", point.date),
-                        y: .value(showVolume ? "Volume" : "Weight", yValue)
+                        y: .value(metricSelection.rawValue, yValue)
                     )
                     .foregroundStyle(chartColor)
                 }
@@ -317,13 +437,13 @@ struct ExerciseProgressChart: View {
                     .foregroundStyle(.yellow.opacity(0.5))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
                     .annotation(position: .top, alignment: .trailing) {
-                        Text("PR \(showVolume ? "\(Int(prValue))" : prValue.formattedWeight)")
+                        Text("PR \(metricSelection == .volume ? "\(Int(prValue))" : prValue.formattedWeight)")
                             .font(.caption2)
                             .foregroundStyle(.yellow)
                             .monospacedDigit()
                     }
             }
-            .chartYAxisLabel(showVolume ? "kg total" : "kg")
+            .chartYAxisLabel("kg")
         }
     }
 }

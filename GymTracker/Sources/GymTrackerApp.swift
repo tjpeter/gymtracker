@@ -11,7 +11,9 @@ struct GymTrackerApp: App {
             WorkoutSession.self,
             LoggedExercise.self,
             ExerciseSet.self,
-            BodyWeightEntry.self
+            BodyWeightEntry.self,
+            CustomTemplate.self,
+            TemplateExercise.self
         ])
     }
 }

@@ -17,6 +17,7 @@ struct WorkoutSummaryData: Identifiable {
         let totalVolume: Double
         let previousMaxWeight: Double?
         let isPR: Bool
+        let avgRPE: Double?
     }
 
     var totalExercises: Int { exercises.count }
@@ -31,8 +32,10 @@ struct WorkoutSummaryData: Identifiable {
             let workingSets = exercise.sets.filter { !$0.isWarmup }
             let completedSets = workingSets.filter(\.isCompleted)
             let maxWeight = workingSets.map(\.weight).max() ?? 0
-            let volume = completedSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+            let volume = exercise.sets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
             let isPR = exercise.previousWeight.map { maxWeight > $0 } ?? false
+            let rpeValues = workingSets.compactMap(\.rpe)
+            let avgRPE = rpeValues.isEmpty ? nil : rpeValues.reduce(0, +) / Double(rpeValues.count)
 
             return ExerciseSummary(
                 name: exercise.name,
@@ -41,7 +44,8 @@ struct WorkoutSummaryData: Identifiable {
                 maxWeight: maxWeight,
                 totalVolume: volume,
                 previousMaxWeight: exercise.previousWeight,
-                isPR: isPR
+                isPR: isPR,
+                avgRPE: avgRPE
             )
         }
 
@@ -57,9 +61,14 @@ struct WorkoutSummaryData: Identifiable {
 
 struct WorkoutSummaryView: View {
     let summary: WorkoutSummaryData
+    var session: WorkoutSession?
     let onDismiss: () -> Void
     @State private var heroScale: CGFloat = 0.5
     @State private var heroOpacity: Double = 0
+    @State private var sessionRating: Int = 0
+    @State private var showSaveTemplate = false
+    @State private var templateName = ""
+    @State private var templateSaved = false
 
     var body: some View {
         NavigationStack {
@@ -114,6 +123,28 @@ struct WorkoutSummaryView: View {
                         )
                     }
                     .padding(.horizontal)
+
+                    // Session rating
+                    VStack(spacing: 6) {
+                        Text("How was your workout?")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            ForEach(1...5, id: \.self) { star in
+                                Button {
+                                    sessionRating = sessionRating == star ? 0 : star
+                                    session?.rating = sessionRating > 0 ? sessionRating : nil
+                                    try? session?.modelContext?.save()
+                                } label: {
+                                    Image(systemName: star <= sessionRating ? "star.fill" : "star")
+                                        .font(.title2)
+                                        .foregroundStyle(star <= sessionRating ? .yellow : .secondary.opacity(0.4))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
 
                     // PRs banner
                     if summary.prCount > 0 {
@@ -174,6 +205,11 @@ struct WorkoutSummaryView: View {
                                         .font(.caption)
                                         .monospacedDigit()
                                         .foregroundStyle(.secondary)
+                                    if let avgRPE = exercise.avgRPE {
+                                        Text("RPE \(String(format: "%.1f", avgRPE))")
+                                            .font(.caption)
+                                            .foregroundStyle(.orange)
+                                    }
                                 }
                             }
                             .padding()
@@ -183,6 +219,25 @@ struct WorkoutSummaryView: View {
                             )
                             .padding(.horizontal)
                         }
+                    }
+                    // Save as template
+                    if session != nil {
+                        Button {
+                            templateName = "\(summary.gymName) \(summary.workoutType.displayName)"
+                            showSaveTemplate = true
+                        } label: {
+                            Label(templateSaved ? "Template Saved" : "Save as Template", systemImage: templateSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(templateSaved ? .green : .blue)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill((templateSaved ? Color.green : Color.blue).opacity(0.1))
+                                )
+                        }
+                        .disabled(templateSaved)
+                        .padding(.horizontal)
                     }
                 }
                 .padding(.bottom, 24)
@@ -197,20 +252,55 @@ struct WorkoutSummaryView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .alert("Save as Template", isPresented: $showSaveTemplate) {
+                TextField("Template name", text: $templateName)
+                Button("Save") {
+                    if let session = session, !templateName.isEmpty {
+                        saveTemplate(session: session, name: templateName)
+                        withAnimation { templateSaved = true }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Save this workout's exercises as a reusable template.")
+            }
             .onAppear {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                     heroScale = 1.0
                     heroOpacity = 1.0
                 }
+                sessionRating = session?.rating ?? 0
             }
         }
     }
 
-    private func formatVolume(_ volume: Double) -> String {
-        if volume >= 1000 {
-            return String(format: "%.1fk", volume / 1000)
+    private func saveTemplate(session: WorkoutSession, name: String) {
+        guard let context = session.modelContext else { return }
+        let template = CustomTemplate(name: name, gymName: session.gymName, workoutType: session.workoutType)
+        for (index, exercise) in session.sortedExercises.enumerated() {
+            let maxWeight = exercise.sortedSets.map(\.weight).max() ?? 0
+            let firstReps = exercise.sortedSets.first?.reps ?? 10
+            let te = TemplateExercise(
+                name: exercise.name,
+                machineName: exercise.machineName,
+                order: index,
+                sets: exercise.sets.count,
+                reps: firstReps,
+                weight: maxWeight
+            )
+            te.template = template
+            template.exercises.append(te)
         }
-        return "\(Int(volume))"
+        context.insert(template)
+        try? context.save()
+    }
+
+    private func formatVolume(_ volume: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "'"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: volume)) ?? "\(Int(volume))"
     }
 }
 

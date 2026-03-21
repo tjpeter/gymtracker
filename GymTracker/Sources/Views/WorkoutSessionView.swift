@@ -9,10 +9,13 @@ struct WorkoutSessionView: View {
     @State private var showCompleteAlert = false
     @State private var restTimer = RestTimerViewModel()
     @State private var timerVisible = true
-    @State private var allExpanded = true
+    @State private var allExpanded = false
     @State private var globalExpandState: Bool? = nil
     @State private var completionSummary: WorkoutSummaryData? = nil
+    @State private var completedSession: WorkoutSession? = nil
     @State private var undoBannerText: String? = nil
+    @State private var supersetSourceExercise: LoggedExercise? = nil
+    @State private var showSupersetPicker = false
 
     var body: some View {
         Group {
@@ -49,7 +52,26 @@ struct WorkoutSessionView: View {
                     // Exercises
                     Section {
                         ForEach(session.sortedExercises) { exercise in
-                            ExerciseCardView(exercise: exercise, viewModel: viewModel, globalExpandState: globalExpandState)
+                            ExerciseCardView(
+                                exercise: exercise,
+                                viewModel: viewModel,
+                                globalExpandState: globalExpandState,
+                                onDelete: {
+                                    let name = exercise.name
+                                    withAnimation {
+                                        viewModel.removeExercise(exercise)
+                                    }
+                                    NotificationCenter.default.post(
+                                        name: .exerciseDeleted,
+                                        object: nil,
+                                        userInfo: ["name": name]
+                                    )
+                                },
+                                onLinkSuperset: {
+                                    supersetSourceExercise = exercise
+                                    showSupersetPicker = true
+                                }
+                            )
                         }
                         .onMove { source, destination in
                             viewModel.moveExercise(from: source, to: destination)
@@ -153,10 +175,47 @@ struct WorkoutSessionView: View {
         .sheet(isPresented: $showAddExercise) {
             AddExerciseSheet(viewModel: viewModel)
         }
+        .sheet(isPresented: $showSupersetPicker) {
+            if let source = supersetSourceExercise, let session = viewModel.currentSession {
+                NavigationStack {
+                    List {
+                        ForEach(session.sortedExercises.filter { $0.id != source.id }) { target in
+                            Button {
+                                viewModel.linkSuperset(source, target)
+                                showSupersetPicker = false
+                                supersetSourceExercise = nil
+                            } label: {
+                                HStack {
+                                    Text(target.name)
+                                    Spacer()
+                                    if target.supersetGroupId != nil {
+                                        Image(systemName: "link")
+                                            .font(.caption)
+                                            .foregroundStyle(.purple)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle("Link with...")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") {
+                                showSupersetPicker = false
+                                supersetSourceExercise = nil
+                            }
+                        }
+                    }
+                }
+                .presentationDetents([.medium])
+            }
+        }
         .alert("Complete Workout?", isPresented: $showCompleteAlert) {
             Button("Complete", role: .none) {
                 restTimer.stop()
                 if let session = viewModel.currentSession {
+                    completedSession = session
                     completionSummary = WorkoutSummaryData.from(session: session)
                 }
                 viewModel.completeWorkout()
@@ -167,8 +226,9 @@ struct WorkoutSessionView: View {
             Text("This will finalize the workout and save it to your history.")
         }
         .sheet(item: $completionSummary) { summary in
-            WorkoutSummaryView(summary: summary) {
+            WorkoutSummaryView(summary: summary, session: completedSession) {
                 completionSummary = nil
+                completedSession = nil
                 dismiss()
             }
             .interactiveDismissDisabled()

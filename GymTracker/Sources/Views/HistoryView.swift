@@ -11,6 +11,7 @@ struct HistoryView: View {
     @Bindable var viewModel: WorkoutViewModel
     @State private var filterGymName: String?
     @State private var filterWorkout: WorkoutType?
+    @State private var timeRange: HistoryTimeRange = .all
     @State private var sessionToDelete: WorkoutSession?
     @State private var showDeleteAlert = false
     @State private var showExportSheet = false
@@ -32,12 +33,23 @@ struct HistoryView: View {
         sessions.filter { session in
             if let gym = filterGymName, session.gymName != gym { return false }
             if let workout = filterWorkout, session.workoutType != workout { return false }
+            if let start = timeRange.startDate, session.date < start { return false }
             return true
         }
     }
 
     var body: some View {
         List {
+            // Time range
+            Section {
+                Picker("Time Range", selection: $timeRange) {
+                    ForEach(HistoryTimeRange.allCases) { range in
+                        Text(range.rawValue).tag(range)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
             // Filters
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -99,6 +111,16 @@ struct HistoryView: View {
                                 if let duration = session.durationMinutes {
                                     Text("·")
                                     Text("\(duration) min")
+                                }
+                                if let rating = session.rating, rating > 0 {
+                                    Text("·")
+                                    HStack(spacing: 1) {
+                                        ForEach(1...rating, id: \.self) { _ in
+                                            Image(systemName: "star.fill")
+                                                .font(.system(size: 8))
+                                                .foregroundStyle(.yellow)
+                                        }
+                                    }
                                 }
                             }
                             .font(.caption2)
@@ -172,6 +194,24 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+enum HistoryTimeRange: String, CaseIterable, Identifiable {
+    case oneMonth = "1M"
+    case threeMonths = "3M"
+    case sixMonths = "6M"
+    case all = "All"
+    var id: String { rawValue }
+
+    var startDate: Date? {
+        let cal = Calendar.current
+        switch self {
+        case .oneMonth: return cal.date(byAdding: .month, value: -1, to: Date())
+        case .threeMonths: return cal.date(byAdding: .month, value: -3, to: Date())
+        case .sixMonths: return cal.date(byAdding: .month, value: -6, to: Date())
+        case .all: return nil
+        }
+    }
 }
 
 struct FilterChip: View {

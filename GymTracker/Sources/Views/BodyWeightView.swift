@@ -29,36 +29,57 @@ struct BodyWeightView: View {
                     let weights = sorted.map(\.weight)
                     let minW = (weights.min() ?? 0) - 1
                     let maxW = (weights.max() ?? 100) + 1
-                    Chart(sorted) { entry in
-                        AreaMark(
-                            x: .value("Date", entry.date),
-                            y: .value("Weight", entry.weight)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.orange.opacity(0.2), .orange.opacity(0.02)],
-                                startPoint: .top,
-                                endPoint: .bottom
+                    let movingAvg = movingAverage(sorted, window: 7)
+                    Chart {
+                        ForEach(sorted) { entry in
+                            AreaMark(
+                                x: .value("Date", entry.date),
+                                y: .value("Weight", entry.weight)
                             )
-                        )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.orange.opacity(0.2), .orange.opacity(0.02)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
 
-                        LineMark(
-                            x: .value("Date", entry.date),
-                            y: .value("Weight", entry.weight)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(.orange)
-                        .lineStyle(StrokeStyle(lineWidth: 2.5))
+                            LineMark(
+                                x: .value("Date", entry.date),
+                                y: .value("Weight", entry.weight)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(.orange.opacity(0.5))
+                            .lineStyle(StrokeStyle(lineWidth: 1.5))
+                            .symbol(.circle)
+                            .symbolSize(20)
 
-                        PointMark(
-                            x: .value("Date", entry.date),
-                            y: .value("Weight", entry.weight)
-                        )
-                        .foregroundStyle(.orange)
+                            PointMark(
+                                x: .value("Date", entry.date),
+                                y: .value("Weight", entry.weight)
+                            )
+                            .foregroundStyle(.orange.opacity(0.5))
+                            .symbolSize(15)
+                        }
+
+                        ForEach(movingAvg, id: \.date) { point in
+                            LineMark(
+                                x: .value("Date", point.date),
+                                y: .value("Weight", point.weight),
+                                series: .value("Series", "7-day avg")
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(.blue)
+                            .lineStyle(StrokeStyle(lineWidth: 3))
+                        }
                     }
                     .chartYScale(domain: minW...maxW)
                     .chartYAxisLabel("kg")
+                    .chartForegroundStyleScale([
+                        "Daily": Color.orange.opacity(0.5),
+                        "7-day avg": Color.blue
+                    ])
                     .frame(height: 200)
                 }
             }
@@ -173,6 +194,23 @@ struct BodyWeightView: View {
                 newWeight = latest.weight
             }
         }
+    }
+
+    private struct MovingAvgPoint {
+        let date: Date
+        let weight: Double
+    }
+
+    private func movingAverage(_ sorted: [BodyWeightEntry], window: Int) -> [MovingAvgPoint] {
+        guard sorted.count >= 2 else { return [] }
+        var result: [MovingAvgPoint] = []
+        for (i, entry) in sorted.enumerated() {
+            let windowStart = Calendar.current.date(byAdding: .day, value: -(window - 1), to: entry.date)!
+            let windowEntries = sorted[0...i].filter { $0.date >= windowStart }
+            let avg = windowEntries.map(\.weight).reduce(0, +) / Double(windowEntries.count)
+            result.append(MovingAvgPoint(date: entry.date, weight: avg))
+        }
+        return result
     }
 
     private func deleteEntries(at offsets: IndexSet) {

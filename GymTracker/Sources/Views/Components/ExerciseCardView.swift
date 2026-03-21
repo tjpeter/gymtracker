@@ -4,8 +4,12 @@ struct ExerciseCardView: View {
     @Bindable var exercise: LoggedExercise
     @Bindable var viewModel: WorkoutViewModel
     var globalExpandState: Bool?
-    @State private var isExpanded = true
+    var onDelete: (() -> Void)?
+    var onLinkSuperset: (() -> Void)?
+    @State private var isExpanded = false
     @State private var isEditingName = false
+    @State private var showRenameAlert = false
+    @State private var renameText = ""
     @State private var showRemoveSetAlert = false
     @State private var showApplyPreviousAlert = false
     @State private var showDeleteExerciseAlert = false
@@ -54,14 +58,14 @@ struct ExerciseCardView: View {
                 }
 
                 // Sets header
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text("#")
                         .frame(width: 28, alignment: .center)
                     Text("Weight")
                     Spacer()
                     Text("Reps")
                     Image(systemName: "checkmark")
-                        .frame(width: 44)
+                        .frame(width: 38)
                 }
                 .font(.caption2.bold())
                 .foregroundStyle(.secondary)
@@ -123,11 +127,30 @@ struct ExerciseCardView: View {
                         }
                         .contextMenu {
                             Button {
-                                isEditingName = true
+                                renameText = exercise.name
+                                showRenameAlert = true
                             } label: {
                                 Label("Rename", systemImage: "pencil")
                             }
+                            if exercise.supersetGroupId != nil {
+                                Button {
+                                    viewModel.unlinkSuperset(exercise)
+                                } label: {
+                                    Label("Unlink Superset", systemImage: "link.badge.plus")
+                                }
+                            } else {
+                                Button {
+                                    onLinkSuperset?()
+                                } label: {
+                                    Label("Link as Superset", systemImage: "link")
+                                }
+                            }
                         }
+                }
+                if !exercise.notes.isEmpty {
+                    Image(systemName: "text.bubble")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
                 if let prev = exercise.previousWeight,
                    exercise.sets.contains(where: { !$0.isWarmup && $0.weight > prev }) {
@@ -152,16 +175,23 @@ struct ExerciseCardView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                if exercise.supersetGroupId != nil {
+                    Image(systemName: "link")
+                        .font(.caption2)
+                        .foregroundStyle(.purple)
+                }
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
+            Button {
                 showDeleteExerciseAlert = true
             } label: {
                 Label("Delete", systemImage: "trash")
             }
+            .tint(.red)
             Button {
-                isEditingName = true
+                renameText = exercise.name
+                showRenameAlert = true
             } label: {
                 Label("Rename", systemImage: "pencil")
             }
@@ -184,17 +214,22 @@ struct ExerciseCardView: View {
         }
         .alert("Delete Exercise?", isPresented: $showDeleteExerciseAlert) {
             Button("Delete", role: .destructive) {
-                let name = exercise.name
-                viewModel.removeExercise(exercise)
-                NotificationCenter.default.post(
-                    name: .exerciseDeleted,
-                    object: nil,
-                    userInfo: ["name": name]
-                )
+                onDelete?()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove \(exercise.name) and all its sets from this workout.")
+        }
+        .alert("Rename Exercise", isPresented: $showRenameAlert) {
+            TextField("Exercise name", text: $renameText)
+            Button("Save") {
+                let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    exercise.name = trimmed
+                    viewModel.autosave()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .alert("Apply Previous Values?", isPresented: $showApplyPreviousAlert) {
             Button("Apply", role: .none) {
@@ -237,7 +272,7 @@ struct SetRowView: View {
     @State private var checkmarkScale: CGFloat = 1.0
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             // Set number with warmup indicator
             Button {
                 set.isWarmup.toggle()
@@ -259,8 +294,8 @@ struct SetRowView: View {
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
-                        .font(.title2)
-                        .frame(minWidth: 44, minHeight: 44)
+                        .font(.title3)
+                        .frame(minWidth: 38, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
@@ -271,7 +306,7 @@ struct SetRowView: View {
                     .multilineTextAlignment(.center)
                     .font(.body.bold())
                     .monospacedDigit()
-                    .frame(width: 60)
+                    .frame(width: 50)
                     .padding(.vertical, 8)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Theme.Colors.inputBackground))
                     .accessibilityLabel("Weight, \(set.weight.formattedWeight) kg")
@@ -282,17 +317,13 @@ struct SetRowView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
-                        .font(.title2)
-                        .frame(minWidth: 44, minHeight: 44)
+                        .font(.title3)
+                        .frame(minWidth: 38, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Increase weight by 2.5 kg")
             }
-
-            Text("kg")
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
             Spacer()
 
@@ -305,7 +336,7 @@ struct SetRowView: View {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(.secondary)
                         .font(.body)
-                        .frame(minWidth: 36, minHeight: 36)
+                        .frame(minWidth: 30, minHeight: 36)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
@@ -315,7 +346,7 @@ struct SetRowView: View {
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
                     .monospacedDigit()
-                    .frame(width: 36)
+                    .frame(width: 30)
                     .padding(.vertical, 6)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Theme.Colors.inputBackground))
                     .accessibilityLabel("Reps, \(set.reps)")
@@ -327,7 +358,7 @@ struct SetRowView: View {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
                         .font(.body)
-                        .frame(minWidth: 36, minHeight: 36)
+                        .frame(minWidth: 30, minHeight: 36)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
@@ -355,11 +386,35 @@ struct SetRowView: View {
                     .foregroundStyle(set.isCompleted ? .green : .secondary.opacity(0.4))
                     .font(.title2)
                     .scaleEffect(checkmarkScale)
-                    .frame(minWidth: 44, minHeight: 44)
+                    .frame(minWidth: 38, minHeight: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(set.isCompleted ? "Set completed, tap to undo" : "Mark set as done")
+
+            // RPE badge
+            if set.isCompleted || set.rpe != nil {
+                Button {
+                    let values: [Double?] = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, nil]
+                    if let current = set.rpe, let idx = values.firstIndex(of: current), idx + 1 < values.count {
+                        set.rpe = values[idx + 1]
+                    } else if set.rpe == nil {
+                        set.rpe = 6
+                    } else {
+                        set.rpe = nil
+                    }
+                    viewModel.autosave()
+                } label: {
+                    Text(set.rpe.map { String(format: $0.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", $0) } ?? "RPE")
+                        .font(.caption2.bold())
+                        .foregroundStyle(set.rpe != nil ? rpeColor(set.rpe!) : .secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill((set.rpe != nil ? rpeColor(set.rpe!) : Color.secondary).opacity(0.12)))
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(set.rpe.map { "RPE \($0)" } ?? "Set RPE, tap to add")
+            }
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 4)
@@ -376,5 +431,14 @@ struct SetRowView: View {
             }
         }
         .opacity(set.isWarmup ? 0.85 : 1.0)
+    }
+
+    private func rpeColor(_ rpe: Double) -> Color {
+        switch rpe {
+        case ..<7.5: return .green
+        case ..<8.5: return .yellow
+        case ..<9.5: return .orange
+        default: return .red
+        }
     }
 }

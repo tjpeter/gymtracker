@@ -7,6 +7,7 @@ final class RestTimerViewModel {
     var remainingSeconds: Int = 0
     var totalSeconds: Int = 0
     var isRunning: Bool = false
+    var isPaused: Bool = false
     var autoStartEnabled: Bool = false
     var lastUsedDuration: Int = 90
 
@@ -34,12 +35,13 @@ final class RestTimerViewModel {
     }
 
     func autoStart() {
-        guard autoStartEnabled, !isRunning else { return }
+        guard autoStartEnabled, !isRunning, !isPaused else { return }
         start(seconds: lastUsedDuration)
     }
 
     func start(seconds: Int) {
         stop()
+        isPaused = false
         lastUsedDuration = seconds
         totalSeconds = seconds
         remainingSeconds = seconds
@@ -56,10 +58,35 @@ final class RestTimerViewModel {
         }
     }
 
+    func pause() {
+        guard isRunning else { return }
+        timer?.invalidate()
+        timer = nil
+        isRunning = false
+        isPaused = true
+        endDate = nil
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["restTimer"])
+    }
+
+    func resume() {
+        guard isPaused, remainingSeconds > 0 else { return }
+        isPaused = false
+        isRunning = true
+        endDate = Date().addingTimeInterval(TimeInterval(remainingSeconds))
+        scheduleNotification(seconds: remainingSeconds)
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.tick()
+            }
+        }
+    }
+
     func stop() {
         timer?.invalidate()
         timer = nil
         isRunning = false
+        isPaused = false
         remainingSeconds = 0
         totalSeconds = 0
         endDate = nil

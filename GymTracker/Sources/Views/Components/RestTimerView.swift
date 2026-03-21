@@ -46,7 +46,7 @@ struct RestTimerView: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 6)
 
-            if timer.isRunning {
+            if timer.isRunning || timer.isPaused {
                 activeTimerDisplay
             } else {
                 presetButtons
@@ -79,34 +79,61 @@ struct RestTimerView: View {
                     Text(timer.timeString)
                         .font(.system(size: 36, weight: .bold, design: .monospaced))
                         .monospacedDigit()
-                    Text("of \(timer.totalSeconds)s")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if timer.isPaused {
+                        Text("PAUSED")
+                            .font(.caption.bold())
+                            .foregroundStyle(.orange)
+                    } else {
+                        Text("of \(timer.totalSeconds)s")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .frame(width: 100, height: 100)
+            .opacity(timer.isPaused ? 0.7 : 1.0)
 
             // Controls
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
+                if timer.isRunning {
+                    Button {
+                        timer.addTime(30)
+                    } label: {
+                        Text("+30s")
+                            .font(.subheadline.bold())
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Theme.Colors.buttonBackground))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Add 30 seconds to timer")
+                }
+
                 Button {
-                    timer.addTime(30)
+                    if timer.isRunning {
+                        timer.pause()
+                    } else {
+                        timer.resume()
+                    }
                 } label: {
-                    Text("+30s")
+                    Label(timer.isPaused ? "Resume" : "Pause",
+                          systemImage: timer.isPaused ? "play.fill" : "pause.fill")
                         .font(.subheadline.bold())
+                        .foregroundStyle(timer.isPaused ? .green : .orange)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Capsule().fill(Theme.Colors.buttonBackground))
+                        .background(Capsule().fill((timer.isPaused ? Color.green : Color.orange).opacity(0.12)))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Add 30 seconds to timer")
+                .accessibilityLabel(timer.isPaused ? "Resume rest timer" : "Pause rest timer")
 
                 Button {
                     timer.stop()
                 } label: {
-                    Label("Stop", systemImage: "stop.fill")
+                    Image(systemName: "stop.fill")
                         .font(.subheadline.bold())
                         .foregroundStyle(.red)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.red.opacity(0.12)))
                 }
@@ -190,8 +217,8 @@ struct RestTimerView: View {
                 }
             } label: {
                 HStack(spacing: 6) {
-                    if timer.isRunning {
-                        Image(systemName: "timer")
+                    if timer.isRunning || timer.isPaused {
+                        Image(systemName: timer.isPaused ? "pause.fill" : "timer")
                             .font(.caption.bold())
                         Text(timer.timeString)
                             .font(.system(.caption, design: .monospaced, weight: .bold))
@@ -203,7 +230,7 @@ struct RestTimerView: View {
                             .font(.caption.bold())
                     }
                 }
-                .foregroundStyle(timer.isRunning ? .orange : .secondary)
+                .foregroundStyle(timer.isRunning ? .orange : (timer.isPaused ? .yellow : .secondary))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(

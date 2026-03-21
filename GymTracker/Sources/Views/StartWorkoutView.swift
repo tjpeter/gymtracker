@@ -6,6 +6,8 @@ struct StartWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showCopyFromSheet = false
     @State private var copyFromSession: WorkoutSession?
+    @State private var showTemplateSheet = false
+    @State private var selectedTemplate: CustomTemplate?
 
     var body: some View {
         NavigationStack {
@@ -199,16 +201,22 @@ struct StartWorkoutView: View {
 
                 Spacer()
 
-                // Copy from previous session
-                if copyFromSession != nil {
+                // Source indicator
+                if copyFromSession != nil || selectedTemplate != nil {
                     HStack(spacing: 8) {
-                        Image(systemName: "doc.on.doc")
+                        Image(systemName: selectedTemplate != nil ? "doc.text" : "doc.on.doc")
                             .font(.caption)
-                        Text("Copying from: \(copyFromSession!.gymName) \(copyFromSession!.workoutType.displayName)")
-                            .font(.caption)
+                        if let template = selectedTemplate {
+                            Text("Template: \(template.name)")
+                                .font(.caption)
+                        } else if let session = copyFromSession {
+                            Text("Copying from: \(session.gymName) \(session.workoutType.displayName)")
+                                .font(.caption)
+                        }
                         Spacer()
                         Button {
                             copyFromSession = nil
+                            selectedTemplate = nil
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.caption)
@@ -222,12 +230,12 @@ struct StartWorkoutView: View {
                 }
 
                 // Start buttons
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Button {
                         showCopyFromSheet = true
                     } label: {
-                        Label("Copy from...", systemImage: "doc.on.doc")
-                            .font(.subheadline)
+                        Label("Copy", systemImage: "doc.on.doc")
+                            .font(.caption.bold())
                             .foregroundStyle(.blue)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
@@ -238,14 +246,30 @@ struct StartWorkoutView: View {
                     }
 
                     Button {
-                        if let source = copyFromSession {
+                        showTemplateSheet = true
+                    } label: {
+                        Label("Template", systemImage: "doc.text")
+                            .font(.caption.bold())
+                            .foregroundStyle(.purple)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.purple, lineWidth: 1.5)
+                            )
+                    }
+
+                    Button {
+                        if let template = selectedTemplate {
+                            viewModel.startWorkout(fromTemplate: template)
+                        } else if let source = copyFromSession {
                             viewModel.startWorkout(copyingFrom: source)
                         } else {
                             viewModel.startWorkout()
                         }
                         onStart()
                     } label: {
-                        Text("Begin Workout")
+                        Text("Begin")
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -269,7 +293,15 @@ struct StartWorkoutView: View {
             .sheet(isPresented: $showCopyFromSheet) {
                 CopyFromSessionSheet(viewModel: viewModel) { session in
                     copyFromSession = session
+                    selectedTemplate = nil
                     showCopyFromSheet = false
+                }
+            }
+            .sheet(isPresented: $showTemplateSheet) {
+                TemplatePickerSheet(viewModel: viewModel) { template in
+                    selectedTemplate = template
+                    copyFromSession = nil
+                    showTemplateSheet = false
                 }
             }
         }
@@ -332,6 +364,93 @@ struct CopyFromSessionSheet: View {
             }
             .onAppear {
                 sessions = viewModel.recentCompletedSessions()
+            }
+        }
+    }
+}
+
+// MARK: - Template Picker Sheet
+
+struct TemplatePickerSheet: View {
+    @Bindable var viewModel: WorkoutViewModel
+    var onSelect: (CustomTemplate) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var templates: [CustomTemplate] = []
+    @State private var templateToDelete: CustomTemplate?
+    @State private var showDeleteAlert = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if templates.isEmpty {
+                    ContentUnavailableView(
+                        "No Templates",
+                        systemImage: "doc.text",
+                        description: Text("Save a template after completing a workout")
+                    )
+                } else {
+                    ForEach(templates) { template in
+                        Button {
+                            onSelect(template)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(template.name)
+                                        .font(.subheadline.bold())
+                                    Spacer()
+                                    Text(template.workoutType.displayName)
+                                        .font(.caption)
+                                        .foregroundStyle(template.workoutType.color)
+                                }
+                                HStack {
+                                    Text(template.gymName)
+                                    Text("·")
+                                    Text("\(template.exercises.count) exercises")
+                                    Text("·")
+                                    Text(template.createdDate, style: .date)
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            .foregroundStyle(.primary)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                templateToDelete = template
+                                showDeleteAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Templates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .alert("Delete Template?", isPresented: $showDeleteAlert) {
+                Button("Delete", role: .destructive) {
+                    if let template = templateToDelete {
+                        viewModel.deleteTemplate(template)
+                        templates.removeAll { $0.id == template.id }
+                        templateToDelete = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    templateToDelete = nil
+                }
+            } message: {
+                if let template = templateToDelete {
+                    Text("Delete template \"\(template.name)\"? This cannot be undone.")
+                }
+            }
+            .onAppear {
+                templates = viewModel.fetchCustomTemplates()
             }
         }
     }

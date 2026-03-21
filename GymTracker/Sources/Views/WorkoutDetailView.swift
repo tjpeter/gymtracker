@@ -22,6 +22,33 @@ struct WorkoutDetailView: View {
                 if let duration = session.durationMinutes {
                     LabeledContent("Duration", value: "\(duration) min")
                 }
+                if let rating = session.rating, rating > 0, !isEditing {
+                    LabeledContent("Rating") {
+                        HStack(spacing: 2) {
+                            ForEach(1...5, id: \.self) { star in
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .font(.caption)
+                                    .foregroundStyle(star <= rating ? .yellow : .secondary.opacity(0.3))
+                            }
+                        }
+                    }
+                }
+                if isEditing {
+                    LabeledContent("Rating") {
+                        HStack(spacing: 4) {
+                            ForEach(1...5, id: \.self) { star in
+                                Button {
+                                    session.rating = session.rating == star ? nil : star
+                                } label: {
+                                    Image(systemName: star <= (session.rating ?? 0) ? "star.fill" : "star")
+                                        .font(.body)
+                                        .foregroundStyle(star <= (session.rating ?? 0) ? .yellow : .secondary.opacity(0.3))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
                 if isEditing {
                     TextField("Notes", text: Binding(
                         get: { session.notes },
@@ -31,6 +58,18 @@ struct WorkoutDetailView: View {
                 } else if !session.notes.isEmpty {
                     LabeledContent("Notes", value: session.notes)
                 }
+            }
+
+            // Summary stats
+            Section("Summary") {
+                let summary = WorkoutSummaryData.from(session: session)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    StatCell(label: "Duration", value: "\(summary.duration) min", icon: "clock.fill", color: .blue)
+                    StatCell(label: "Working Sets", value: "\(summary.totalSets)", icon: "number", color: .orange)
+                    StatCell(label: "Volume", value: formatVolume(summary.totalVolume), icon: "scalemass.fill", color: .green)
+                    StatCell(label: "PRs", value: "\(summary.prCount)", icon: "trophy.fill", color: .yellow)
+                }
+                .padding(.vertical, 4)
             }
 
             ForEach(session.sortedExercises) { exercise in
@@ -63,6 +102,14 @@ struct WorkoutDetailView: View {
                                 Text("\(set.reps) reps")
                                     .font(.subheadline)
                                     .monospacedDigit()
+                                if let rpe = set.rpe {
+                                    Text("RPE \(String(format: rpe.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", rpe))")
+                                        .font(.caption2.bold())
+                                        .foregroundStyle(.orange)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(Capsule().fill(Color.orange.opacity(0.12)))
+                                }
                             }
                             .opacity(set.isWarmup ? 0.7 : 1.0)
                         }
@@ -114,6 +161,38 @@ struct WorkoutDetailView: View {
                 }
             }
         }
+    }
+
+    private func formatVolume(_ volume: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "'"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: volume)) ?? "\(Int(volume))"
+    }
+}
+
+private struct StatCell: View {
+    let label: String
+    let value: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+            Text(value)
+                .font(.headline.bold())
+                .monospacedDigit()
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.08)))
     }
 }
 

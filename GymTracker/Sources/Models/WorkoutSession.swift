@@ -10,6 +10,7 @@ final class WorkoutSession {
     var notes: String
     var isCompleted: Bool
     var endDate: Date?
+    var rating: Int?
 
     @Relationship(deleteRule: .cascade, inverse: \LoggedExercise.session)
     var exercises: [LoggedExercise]

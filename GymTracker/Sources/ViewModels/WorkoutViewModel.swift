@@ -183,11 +183,12 @@ final class WorkoutViewModel {
 
     func removeExercise(_ exercise: LoggedExercise) {
         guard let context = modelContext, let session = currentSession else { return }
-        session.exercises.removeAll { $0.id == exercise.id }
-        context.delete(exercise)
+        let exerciseID = exercise.id
+        session.exercises.removeAll { $0.id == exerciseID }
         for (index, ex) in session.sortedExercises.enumerated() {
             ex.order = index
         }
+        context.delete(exercise)
         autosave()
     }
 
@@ -222,6 +223,26 @@ final class WorkoutViewModel {
         context.delete(set)
         for (index, s) in exercise.sortedSets.enumerated() {
             s.setNumber = index + 1
+        }
+        autosave()
+    }
+
+    // MARK: - Superset Management
+
+    func linkSuperset(_ exercise1: LoggedExercise, _ exercise2: LoggedExercise) {
+        let groupId = exercise1.supersetGroupId ?? exercise2.supersetGroupId ?? UUID()
+        exercise1.supersetGroupId = groupId
+        exercise2.supersetGroupId = groupId
+        autosave()
+    }
+
+    func unlinkSuperset(_ exercise: LoggedExercise) {
+        guard let groupId = exercise.supersetGroupId, let session = currentSession else { return }
+        exercise.supersetGroupId = nil
+        // If only one exercise remains in the group, unlink it too
+        let remaining = session.exercises.filter { $0.supersetGroupId == groupId }
+        if remaining.count == 1 {
+            remaining.first?.supersetGroupId = nil
         }
         autosave()
     }
@@ -274,6 +295,70 @@ final class WorkoutViewModel {
         guard let context = modelContext else { return }
         context.delete(session)
         try? context.save()
+    }
+
+    // MARK: - Template Management
+
+    func saveAsTemplate(session: WorkoutSession, name: String) {
+        guard let context = modelContext else { return }
+        let template = CustomTemplate(name: name, gymName: session.gymName, workoutType: session.workoutType)
+        for (index, exercise) in session.sortedExercises.enumerated() {
+            let maxWeight = exercise.sortedSets.map(\.weight).max() ?? 0
+            let firstReps = exercise.sortedSets.first?.reps ?? 10
+            let te = TemplateExercise(
+                name: exercise.name,
+                machineName: exercise.machineName,
+                order: index,
+                sets: exercise.sets.count,
+                reps: firstReps,
+                weight: maxWeight
+            )
+            te.template = template
+            template.exercises.append(te)
+        }
+        context.insert(template)
+        try? context.save()
+    }
+
+    func fetchCustomTemplates() -> [CustomTemplate] {
+        guard let context = modelContext else { return [] }
+        let descriptor = FetchDescriptor<CustomTemplate>(
+            sortBy: [SortDescriptor(\.createdDate, order: .reverse)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    func deleteTemplate(_ template: CustomTemplate) {
+        guard let context = modelContext else { return }
+        context.delete(template)
+        try? context.save()
+    }
+
+    func startWorkout(fromTemplate template: CustomTemplate) {
+        guard let context = modelContext else { return }
+        let gymName = effectiveGymName
+        guard !gymName.isEmpty else { return }
+
+        let session = WorkoutSession(gymName: gymName, workoutType: selectedWorkoutType)
+
+        for (index, te) in template.sortedExercises.enumerated() {
+            let exercise = LoggedExercise(
+                name: te.name,
+                order: index,
+                machineName: te.machineName
+            )
+            for i in 1...max(1, te.sets) {
+                let set = ExerciseSet(setNumber: i, reps: te.reps, weight: te.weight)
+                exercise.sets.append(set)
+            }
+            exercise.session = session
+            session.exercises.append(exercise)
+        }
+
+        context.insert(session)
+        autosave()
+        currentSession = session
+        isWorkoutActive = true
     }
 
     // MARK: - Fetch Previous Session

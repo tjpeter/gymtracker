@@ -9,15 +9,17 @@ final class ExerciseSet {
     var weight: Double
     var isCompleted: Bool
     var isWarmup: Bool
+    var rpe: Double?
 
     var exercise: LoggedExercise?
 
-    init(setNumber: Int, reps: Int = 0, weight: Double = 0, isCompleted: Bool = false, isWarmup: Bool = false) {
+    init(setNumber: Int, reps: Int = 0, weight: Double = 0, isCompleted: Bool = false, isWarmup: Bool = false, rpe: Double? = nil) {
         self.id = UUID()
         self.setNumber = setNumber
         self.reps = reps
         self.weight = weight
         self.isCompleted = isCompleted
         self.isWarmup = isWarmup
+        self.rpe = rpe
     }
 }
