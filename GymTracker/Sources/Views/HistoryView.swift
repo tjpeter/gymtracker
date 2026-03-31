@@ -1,7 +1,9 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct HistoryView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(
         filter: #Predicate<WorkoutSession> { $0.isCompleted == true },
         sort: \WorkoutSession.date,
@@ -16,6 +18,9 @@ struct HistoryView: View {
     @State private var showDeleteAlert = false
     @State private var showExportSheet = false
     @State private var exportFileURL: URL?
+    @State private var showImportPicker = false
+    @State private var importAlertMessage: String?
+    @State private var showImportAlert = false
 
     var allGymNames: [String] {
         var names: [String] = []
@@ -156,10 +161,15 @@ struct HistoryView: View {
                     } label: {
                         Label("Export JSON", systemImage: "curlybraces")
                     }
+                    Divider()
+                    Button {
+                        showImportPicker = true
+                    } label: {
+                        Label("Restore from Backup", systemImage: "square.and.arrow.down")
+                    }
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
+                    Image(systemName: "ellipsis.circle")
                 }
-                .disabled(sessions.isEmpty)
             }
         }
         .sheet(isPresented: $showExportSheet) {
@@ -167,6 +177,47 @@ struct HistoryView: View {
                 ShareSheet(activityItems: [url])
                     .presentationDetents([.medium, .large])
             }
+        }
+        .fileImporter(isPresented: $showImportPicker, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                guard url.startAccessingSecurityScopedResource() else {
+                    importAlertMessage = "Could not access the selected file."
+                    showImportAlert = true
+                    return
+                }
+                defer { url.stopAccessingSecurityScopedResource() }
+                do {
+                    let data = try Data(contentsOf: url)
+                    let importResult = try DataExporter.importJSON(from: data, context: modelContext)
+                    var parts: [String] = []
+                    if importResult.sessionsImported > 0 {
+                        parts.append("\(importResult.sessionsImported) workout\(importResult.sessionsImported == 1 ? "" : "s")")
+                    }
+                    if importResult.bodyWeightImported > 0 {
+                        parts.append("\(importResult.bodyWeightImported) body weight entr\(importResult.bodyWeightImported == 1 ? "y" : "ies")")
+                    }
+                    if parts.isEmpty {
+                        importAlertMessage = "No new data to import. All entries already exist."
+                    } else {
+                        importAlertMessage = "Imported \(parts.joined(separator: " and "))."
+                    }
+                    if importResult.sessionsSkipped > 0 || importResult.bodyWeightSkipped > 0 {
+                        importAlertMessage! += " Skipped \(importResult.sessionsSkipped + importResult.bodyWeightSkipped) duplicate(s)."
+                    }
+                } catch {
+                    importAlertMessage = error.localizedDescription
+                }
+                showImportAlert = true
+            case .failure(let error):
+                importAlertMessage = error.localizedDescription
+                showImportAlert = true
+            }
+        }
+        .alert("Import", isPresented: $showImportAlert) {
+            Button("OK") { importAlertMessage = nil }
+        } message: {
+            Text(importAlertMessage ?? "")
         }
         .alert("Delete Workout?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {

@@ -7,17 +7,25 @@ struct HistoryDataImporter {
 
     static func importIfNeeded(context: ModelContext) {
         // Only import once — check if any completed sessions exist
-        let descriptor = FetchDescriptor<WorkoutSession>(
+        let sessionDescriptor = FetchDescriptor<WorkoutSession>(
             predicate: #Predicate { $0.isCompleted == true }
         )
-        if let count = try? context.fetchCount(descriptor), count > 0 {
-            return
+        if let count = try? context.fetchCount(sessionDescriptor), count == 0 {
+            let sessions = buildHistoricalSessions()
+            for session in sessions {
+                context.insert(session)
+            }
         }
 
-        let sessions = buildHistoricalSessions()
-        for session in sessions {
-            context.insert(session)
+        // Seed body weight entries if none exist
+        let bwDescriptor = FetchDescriptor<BodyWeightEntry>()
+        if let count = try? context.fetchCount(bwDescriptor), count == 0 {
+            let entries = buildSeedBodyWeightEntries()
+            for entry in entries {
+                context.insert(entry)
+            }
         }
+
         try? context.save()
     }
 
@@ -181,6 +189,28 @@ struct HistoryDataImporter {
         ))
 
         return sessions
+    }
+
+    // MARK: - Seed Body Weight
+
+    private static func buildSeedBodyWeightEntries() -> [BodyWeightEntry] {
+        // Realistic body weight entries spanning the same date range as seed workouts
+        let data: [(day: Int, month: Int, weight: Double)] = [
+            (14, 2, 78.5),
+            (17, 2, 78.3),
+            (20, 2, 78.6),
+            (23, 2, 78.2),
+            (26, 2, 78.0),
+            (1, 3, 77.8),
+            (4, 3, 77.9),
+            (7, 3, 77.5),
+        ]
+        return data.map { item in
+            BodyWeightEntry(
+                date: makeDate(day: item.day, month: item.month, year: 2026, hour: 7),
+                weight: item.weight
+            )
+        }
     }
 
     // MARK: - Helpers
