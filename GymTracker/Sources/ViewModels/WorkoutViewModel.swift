@@ -10,6 +10,7 @@ final class WorkoutViewModel {
     var isCustomGym: Bool = false
     var currentSession: WorkoutSession?
     var isWorkoutActive = false
+    var restTimer = RestTimerViewModel()
 
     private var modelContext: ModelContext?
 
@@ -145,6 +146,7 @@ final class WorkoutViewModel {
         session.isCompleted = true
         session.endDate = Date()
         autosave()
+        restTimer.stop()
         isWorkoutActive = false
         currentSession = nil
     }
@@ -155,6 +157,7 @@ final class WorkoutViewModel {
         guard let context = modelContext, let session = currentSession else { return }
         context.delete(session)
         try? context.save()
+        restTimer.stop()
         isWorkoutActive = false
         currentSession = nil
     }

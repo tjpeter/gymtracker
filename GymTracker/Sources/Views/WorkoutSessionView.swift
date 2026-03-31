@@ -7,7 +7,6 @@ struct WorkoutSessionView: View {
     @State private var showAddExercise = false
     @State private var showDiscardAlert = false
     @State private var showCompleteAlert = false
-    @State private var restTimer = RestTimerViewModel()
     @State private var timerVisible = true
     @State private var allExpanded = false
     @State private var globalExpandState: Bool? = nil
@@ -128,7 +127,7 @@ struct WorkoutSessionView: View {
                 .listStyle(.insetGrouped)
                 .scrollDismissesKeyboard(.interactively)
                 .safeAreaInset(edge: .bottom) {
-                    RestTimerView(timer: restTimer, isVisible: $timerVisible)
+                    RestTimerView(timer: viewModel.restTimer, isVisible: $timerVisible)
                         .animation(.spring(duration: 0.3), value: timerVisible)
                 }
             } else {
@@ -154,7 +153,6 @@ struct WorkoutSessionView: View {
         }
         .navigationTitle("Workout")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(viewModel.isWorkoutActive)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -164,11 +162,14 @@ struct WorkoutSessionView: View {
                 .fontWeight(.semibold)
             }
             if viewModel.isWorkoutActive {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Discard", role: .destructive) {
-                        showDiscardAlert = true
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Discard Workout", systemImage: "trash", role: .destructive) {
+                            showDiscardAlert = true
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .foregroundStyle(.red)
                 }
             }
         }
@@ -213,7 +214,7 @@ struct WorkoutSessionView: View {
         }
         .alert("Complete Workout?", isPresented: $showCompleteAlert) {
             Button("Complete", role: .none) {
-                restTimer.stop()
+                viewModel.restTimer.stop()
                 if let session = viewModel.currentSession {
                     completedSession = session
                     completionSummary = WorkoutSummaryData.from(session: session)
@@ -235,7 +236,7 @@ struct WorkoutSessionView: View {
         }
         .alert("Discard Workout?", isPresented: $showDiscardAlert) {
             Button("Discard", role: .destructive) {
-                restTimer.stop()
+                viewModel.restTimer.stop()
                 viewModel.discardWorkout()
                 dismiss()
             }
@@ -248,11 +249,8 @@ struct WorkoutSessionView: View {
                 viewModel.autosave()
             }
         }
-        .onAppear {
-            RestTimerViewModel.requestNotificationPermission()
-        }
         .onReceive(NotificationCenter.default.publisher(for: .setCompleted)) { _ in
-            restTimer.autoStart()
+            viewModel.restTimer.autoStart()
         }
         .onReceive(NotificationCenter.default.publisher(for: .exerciseDeleted)) { notification in
             if let name = notification.userInfo?["name"] as? String {
@@ -266,7 +264,7 @@ struct WorkoutSessionView: View {
                 }
             }
         }
-        .onChange(of: restTimer.isRunning) { _, running in
+        .onChange(of: viewModel.restTimer.isRunning) { _, running in
             if running {
                 withAnimation(.spring(duration: 0.3)) {
                     timerVisible = true

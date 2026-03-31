@@ -167,8 +167,20 @@ struct HomeView: View {
             .navigationDestination(isPresented: $navigateToSession) {
                 WorkoutSessionView(viewModel: workoutVM)
             }
+            .overlay(alignment: .bottom) {
+                if workoutVM.isWorkoutActive && !navigateToSession {
+                    ActiveWorkoutBar(viewModel: workoutVM) {
+                        navigateToSession = true
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 4)
+                }
+            }
+            .animation(.spring(duration: 0.3), value: workoutVM.isWorkoutActive)
+            .animation(.spring(duration: 0.3), value: navigateToSession)
             .onAppear {
                 workoutVM.setModelContext(modelContext)
+                RestTimerViewModel.requestNotificationPermission()
                 // Import historical data on first launch
                 HistoryDataImporter.importIfNeeded(context: modelContext)
                 // Check for incomplete workout to resume
@@ -320,5 +332,59 @@ struct RecentWorkoutRow: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Theme.Colors.cardBackground)
         )
+    }
+}
+
+// MARK: - Active Workout Bar
+
+struct ActiveWorkoutBar: View {
+    let viewModel: WorkoutViewModel
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 8, height: 8)
+
+                if let session = viewModel.currentSession {
+                    Text(session.gymName)
+                        .font(.subheadline.bold())
+                    Text("·")
+                        .foregroundStyle(.white.opacity(0.6))
+                    Text(session.workoutType.displayName)
+                        .font(.subheadline)
+                }
+
+                Spacer()
+
+                if viewModel.restTimer.isRunning || viewModel.restTimer.isPaused {
+                    HStack(spacing: 4) {
+                        Image(systemName: viewModel.restTimer.isPaused ? "pause.fill" : "timer")
+                            .font(.caption)
+                        Text(viewModel.restTimer.timeString)
+                            .font(.subheadline.bold())
+                            .monospacedDigit()
+                    }
+                    .foregroundStyle(viewModel.restTimer.isPaused ? .yellow : .white)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.orange.gradient)
+                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+            )
+            .padding(.horizontal)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Return to active workout")
     }
 }
