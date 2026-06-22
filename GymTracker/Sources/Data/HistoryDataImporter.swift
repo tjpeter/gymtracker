@@ -27,6 +27,35 @@ struct HistoryDataImporter {
         }
 
         try? context.save()
+
+        // One-time reset of body weight tracking to a fresh starting point.
+        resetBodyWeightIfNeeded(context: context)
+    }
+
+    // MARK: - Body Weight Reset
+
+    private static let bodyWeightResetKey = "bodyWeightReset_93kg_103cm_done"
+
+    /// Clears all previously tracked body weight entries and seeds a single starting
+    /// entry (93 kg, 103 cm waist) so tracking begins fresh with waist support.
+    /// Guarded by a UserDefaults flag so it only ever runs once; user entries logged
+    /// afterwards are preserved.
+    static func resetBodyWeightIfNeeded(context: ModelContext) {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: bodyWeightResetKey) else { return }
+
+        let descriptor = FetchDescriptor<BodyWeightEntry>()
+        if let existing = try? context.fetch(descriptor) {
+            for entry in existing {
+                context.delete(entry)
+            }
+        }
+
+        let start = BodyWeightEntry(date: Date(), weight: 93, waist: 103)
+        context.insert(start)
+        try? context.save()
+
+        defaults.set(true, forKey: bodyWeightResetKey)
     }
 
     // MARK: - Build Sessions

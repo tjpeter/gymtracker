@@ -497,6 +497,7 @@ Also:
 - The `rpe` field on `ExerciseSet` defaults to `nil` for backward compatibility
 - The `rating` field on `WorkoutSession` defaults to `nil` for backward compatibility
 - The `supersetGroupId` field on `LoggedExercise` defaults to `nil` for backward compatibility
+- The `waist` field on `BodyWeightEntry` defaults to `nil` for backward compatibility
 
 ## Project structure
 
@@ -509,6 +510,7 @@ GymTracker/
 │   │   ├── WorkoutSession.swift     # SwiftData models
 │   │   ├── BodyWeightEntry.swift    # Body weight model
 │   │   ├── CustomTemplate.swift    # User-saved workout templates
+│   │   ├── FeedbackItem.swift      # In-app bug/idea notes
 │   │   └── WorkoutTemplates.swift   # Default exercise templates
 │   ├── ViewModels/
 │   │   ├── WorkoutViewModel.swift   # Core workout logic
@@ -521,6 +523,7 @@ GymTracker/
 │   │   ├── HistoryView.swift        # Workout history with filters
 │   │   ├── ProgressView_.swift      # Charts and exercise progress
 │   │   ├── BodyWeightView.swift     # Body weight tracking
+│   │   ├── FeedbackView.swift       # Notes & ideas list + quick capture
 │   │   └── Components/
 │   │       ├── ExerciseCardView.swift      # Exercise card with set rows
 │   │       ├── RestTimerView.swift         # Rest timer UI

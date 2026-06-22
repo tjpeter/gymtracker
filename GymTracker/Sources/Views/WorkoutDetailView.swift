@@ -73,6 +73,9 @@ struct WorkoutDetailView: View {
             }
 
             ForEach(session.sortedExercises) { exercise in
+                // A set is "unlogged" if it has no reps or wasn't checked off.
+                // An exercise greys out entirely when none of its sets were logged.
+                let allUnlogged = !exercise.sortedSets.isEmpty && exercise.sortedSets.allSatisfy { $0.reps == 0 || !$0.isCompleted }
                 Section {
                     if !exercise.machineName.isEmpty {
                         HStack {
@@ -89,19 +92,30 @@ struct WorkoutDetailView: View {
                         if isEditing {
                             EditableSetRow(set: set)
                         } else {
+                            // A set with no reps, or that wasn't checked off, isn't a real
+                            // working set — mute it so actual working sets stand out.
+                            let isUnlogged = set.reps == 0 || !set.isCompleted
                             HStack {
                                 Text(set.isWarmup ? "W" : "Set \(set.setNumber)")
                                     .font(.subheadline)
                                     .foregroundStyle(set.isWarmup ? .orange : .secondary)
                                 Spacer()
                                 Text("\(set.weight.formattedWeight) kg")
-                                    .font(.body.bold())
+                                    .font(isUnlogged ? .body : .body.bold())
                                     .monospacedDigit()
-                                Text("×")
-                                    .foregroundStyle(.secondary)
-                                Text("\(set.reps) reps")
-                                    .font(.subheadline)
-                                    .monospacedDigit()
+                                    .foregroundStyle(isUnlogged ? .secondary : .primary)
+                                if isUnlogged {
+                                    // Don't show prefilled reps for a set that wasn't done.
+                                    Text("· skipped")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.tertiary)
+                                } else {
+                                    Text("×")
+                                        .foregroundStyle(.secondary)
+                                    Text("\(set.reps) reps")
+                                        .font(.subheadline)
+                                        .monospacedDigit()
+                                }
                                 if let rpe = set.rpe {
                                     Text("RPE \(String(format: rpe.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", rpe))")
                                         .font(.caption2.bold())
@@ -111,7 +125,9 @@ struct WorkoutDetailView: View {
                                         .background(Capsule().fill(Color.orange.opacity(0.12)))
                                 }
                             }
-                            .opacity(set.isWarmup ? 0.7 : 1.0)
+                            // Fade unlogged sets further; warmups stay slightly muted.
+                            // (Skip the per-set fade when the whole exercise is already greyed.)
+                            .opacity(isUnlogged && !allUnlogged ? 0.45 : (set.isWarmup ? 0.7 : 1.0))
                         }
                     }
 
@@ -133,9 +149,19 @@ struct WorkoutDetailView: View {
                         ))
                         .textCase(nil)
                     } else {
-                        Text(exercise.name)
+                        HStack {
+                            Text(exercise.name)
+                            if allUnlogged {
+                                Text("· not logged")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .textCase(nil)
+                            }
+                        }
                     }
                 }
+                // Grey out the whole exercise when none of its sets were logged.
+                .opacity(allUnlogged && !isEditing ? 0.5 : 1.0)
             }
         }
         .listStyle(.insetGrouped)

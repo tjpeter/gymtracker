@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var showStartWorkout = false
     @State private var navigateToSession = false
     @State private var hasCheckedResume = false
+    @State private var showQuickNote = false
 
     var totalWorkouts: Int { completedSessions.count }
 
@@ -135,6 +136,13 @@ struct HomeView: View {
                             QuickLinkRow(icon: "scalemass.fill", title: "Body Weight", subtitle: "Track your weight", color: .orange)
                         }
                         .buttonStyle(.plain)
+
+                        NavigationLink {
+                            FeedbackView()
+                        } label: {
+                            QuickLinkRow(icon: "lightbulb.fill", title: "Notes & Ideas", subtitle: "Log bugs and feature ideas", color: .yellow)
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     // Recent workouts
@@ -158,6 +166,19 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("GymTracker")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showQuickNote = true
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel("Quick note — log a bug or idea")
+                }
+            }
+            .sheet(isPresented: $showQuickNote) {
+                FeedbackCaptureSheet()
+            }
             .sheet(isPresented: $showStartWorkout) {
                 StartWorkoutView(viewModel: workoutVM, onStart: {
                     showStartWorkout = false

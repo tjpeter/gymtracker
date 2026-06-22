@@ -320,12 +320,16 @@ struct ProgressView_: View {
         var points: [ExerciseDataPoint] = []
         for session in filteredSessions.sorted(by: { $0.date < $1.date }) {
             for exercise in session.exercises where exercise.name == name {
-                let workingSets = exercise.sortedSets.filter { !$0.isWarmup }
-                let maxWeight = workingSets.map(\.weight).max() ?? exercise.sortedSets.map(\.weight).max() ?? 0
-                let totalSets = workingSets.count
-                let volume = workingSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+                // Only checked-off working sets count. Skip sessions where this
+                // exercise was loaded but never performed (nothing ticked) so they
+                // don't pull the chart down to zero.
+                let completedSets = exercise.sortedSets.filter { !$0.isWarmup && $0.isCompleted }
+                guard !completedSets.isEmpty else { continue }
+                let maxWeight = completedSets.map(\.weight).max() ?? 0
+                let totalSets = completedSets.count
+                let volume = completedSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
                 // Epley formula: weight × (1 + reps/30)
-                let best1RM = workingSets.map { $0.weight * (1.0 + Double($0.reps) / 30.0) }.max() ?? 0
+                let best1RM = completedSets.map { $0.weight * (1.0 + Double($0.reps) / 30.0) }.max() ?? 0
                 points.append(ExerciseDataPoint(
                     date: session.date,
                     maxWeight: maxWeight,

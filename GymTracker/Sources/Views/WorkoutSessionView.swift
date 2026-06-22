@@ -14,7 +14,7 @@ struct WorkoutSessionView: View {
     @State private var completedSession: WorkoutSession? = nil
     @State private var undoBannerText: String? = nil
     @State private var supersetSourceExercise: LoggedExercise? = nil
-    @State private var showSupersetPicker = false
+    @State private var showQuickNote = false
 
     var body: some View {
         Group {
@@ -68,7 +68,6 @@ struct WorkoutSessionView: View {
                                 },
                                 onLinkSuperset: {
                                     supersetSourceExercise = exercise
-                                    showSupersetPicker = true
                                 }
                             )
                         }
@@ -164,6 +163,9 @@ struct WorkoutSessionView: View {
             if viewModel.isWorkoutActive {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        Button("Note a Bug / Idea", systemImage: "lightbulb") {
+                            showQuickNote = true
+                        }
                         Button("Discard Workout", systemImage: "trash", role: .destructive) {
                             showDiscardAlert = true
                         }
@@ -173,17 +175,24 @@ struct WorkoutSessionView: View {
                 }
             }
         }
+        .sheet(isPresented: $showQuickNote) {
+            FeedbackCaptureSheet()
+        }
         .sheet(isPresented: $showAddExercise) {
             AddExerciseSheet(viewModel: viewModel)
         }
-        .sheet(isPresented: $showSupersetPicker) {
-            if let source = supersetSourceExercise, let session = viewModel.currentSession {
-                NavigationStack {
-                    List {
-                        ForEach(session.sortedExercises.filter { $0.id != source.id }) { target in
+        .sheet(item: $supersetSourceExercise) { source in
+            NavigationStack {
+                List {
+                    let others = (viewModel.currentSession?.sortedExercises ?? []).filter { $0.id != source.id }
+                    if others.isEmpty {
+                        ContentUnavailableView("No Other Exercises", systemImage: "link", description: Text("Add another exercise to link it as a superset."))
+                    } else {
+                        ForEach(others) { target in
                             Button {
-                                viewModel.linkSuperset(source, target)
-                                showSupersetPicker = false
+                                withAnimation {
+                                    viewModel.linkSuperset(source, target)
+                                }
                                 supersetSourceExercise = nil
                             } label: {
                                 HStack {
@@ -198,19 +207,18 @@ struct WorkoutSessionView: View {
                             }
                         }
                     }
-                    .navigationTitle("Link with...")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") {
-                                showSupersetPicker = false
-                                supersetSourceExercise = nil
-                            }
+                }
+                .navigationTitle("Link with...")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            supersetSourceExercise = nil
                         }
                     }
                 }
-                .presentationDetents([.medium])
             }
+            .presentationDetents([.medium])
         }
         .alert("Complete Workout?", isPresented: $showCompleteAlert) {
             Button("Complete", role: .none) {
@@ -284,11 +292,23 @@ struct AddExerciseSheet: View {
     @State private var reps = 10
     @State private var weight: Double = 0
     @State private var knownNames: [String] = []
+    /// Set when the typed name exactly matches an exercise done before at this gym.
+    /// When present, the new exercise is copied from it (per-set values + notes).
+    @State private var matchedExercise: LoggedExercise? = nil
 
     var suggestions: [String] {
         guard !name.isEmpty else { return [] }
         let query = name.lowercased()
         return knownNames.filter { $0.lowercased().contains(query) }.prefix(5).map { $0 }
+    }
+
+    private var matchSummary: String? {
+        guard let match = matchedExercise else { return nil }
+        let workingSets = match.sortedSets.filter { !$0.isWarmup }
+        let count = workingSets.isEmpty ? match.sortedSets.count : workingSets.count
+        let maxWeight = match.sortedSets.map(\.weight).max() ?? 0
+        let repsAtMax = match.sortedSets.first(where: { $0.weight == maxWeight })?.reps ?? 0
+        return "\(count) × \(repsAtMax) @ \(maxWeight.formattedWeight) kg"
     }
 
     var body: some View {
@@ -312,22 +332,41 @@ struct AddExerciseSheet: View {
                         }
                     }
                 }
-                Section("Details") {
-                    Stepper("Sets: \(sets)", value: $sets, in: 1...10)
-                    Stepper("Reps: \(reps)", value: $reps, in: 1...50)
-                    HStack {
-                        Text("Weight")
-                        Spacer()
-                        TextField("kg", value: $weight, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("kg")
+                if let summary = matchSummary {
+                    Section("From Last Time") {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .foregroundStyle(.blue)
+                            Text("Last at \(viewModel.effectiveGymName): \(summary)")
+                                .font(.subheadline)
+                            Spacer()
+                        }
+                        Text("Values from your last session will be loaded. Adjust them during the workout.")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Section("Details") {
+                        Stepper("Sets: \(sets)", value: $sets, in: 1...10)
+                        Stepper("Reps: \(reps)", value: $reps, in: 1...50)
+                        HStack {
+                            Text("Weight")
+                            Spacer()
+                            TextField("kg", value: $weight, format: .number)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                            Text("kg")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .onChange(of: name) { _, newName in
+                let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+                matchedExercise = trimmed.isEmpty ? nil : viewModel.lastPerformance(ofExerciseNamed: trimmed)
+            }
             .navigationTitle("Add Exercise")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -343,11 +382,16 @@ struct AddExerciseSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        guard !name.isEmpty else { return }
-                        viewModel.addExercise(name: name, sets: sets, reps: reps, weight: weight)
+                        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        if let match = matchedExercise, match.name == trimmed {
+                            viewModel.addExercise(copyingFrom: match)
+                        } else {
+                            viewModel.addExercise(name: trimmed, sets: sets, reps: reps, weight: weight)
+                        }
                         dismiss()
                     }
-                    .disabled(name.isEmpty)
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
             .onAppear {

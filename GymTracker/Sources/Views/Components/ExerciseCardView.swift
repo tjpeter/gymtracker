@@ -153,7 +153,7 @@ struct ExerciseCardView: View {
                         .foregroundStyle(.secondary)
                 }
                 if let prev = exercise.previousWeight,
-                   exercise.sets.contains(where: { !$0.isWarmup && $0.weight > prev }) {
+                   exercise.sets.contains(where: { !$0.isWarmup && $0.isCompleted && $0.weight > prev }) {
                     Image(systemName: "trophy.fill")
                         .font(.caption2)
                         .foregroundStyle(.yellow)
@@ -175,10 +175,18 @@ struct ExerciseCardView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if exercise.supersetGroupId != nil {
-                    Image(systemName: "link")
-                        .font(.caption2)
-                        .foregroundStyle(.purple)
+                if let label = supersetLabel {
+                    HStack(spacing: 2) {
+                        Image(systemName: "link")
+                            .font(.caption2)
+                        Text(label)
+                            .font(.caption2.bold())
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(supersetColor))
+                    .accessibilityLabel("Superset \(label)")
                 }
             }
         }
@@ -196,6 +204,23 @@ struct ExerciseCardView: View {
                 Label("Rename", systemImage: "pencil")
             }
             .tint(.blue)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            if exercise.supersetGroupId != nil {
+                Button {
+                    viewModel.unlinkSuperset(exercise)
+                } label: {
+                    Label("Unlink", systemImage: "link.badge.minus")
+                }
+                .tint(.purple)
+            } else {
+                Button {
+                    onLinkSuperset?()
+                } label: {
+                    Label("Superset", systemImage: "link")
+                }
+                .tint(.purple)
+            }
         }
         .onChange(of: globalExpandState) { _, newValue in
             if let newValue {
@@ -249,6 +274,36 @@ struct ExerciseCardView: View {
                 Text("This will overwrite all sets with \(prevWeight.formattedWeight) kg\(exercise.previousReps.map { " × \($0) reps" } ?? "").")
             }
         }
+    }
+
+    /// Distinct superset group ids in this session, ordered by first appearance,
+    /// so each group gets a stable letter (A, B, …) and color.
+    private var supersetGroups: [UUID] {
+        guard let session = exercise.session else { return [] }
+        var seen: [UUID] = []
+        for ex in session.sortedExercises {
+            if let gid = ex.supersetGroupId, !seen.contains(gid) {
+                seen.append(gid)
+            }
+        }
+        return seen
+    }
+
+    private var supersetGroupIndex: Int? {
+        guard let gid = exercise.supersetGroupId else { return nil }
+        return supersetGroups.firstIndex(of: gid)
+    }
+
+    private var supersetLabel: String? {
+        guard let idx = supersetGroupIndex else { return nil }
+        let scalar = UnicodeScalar(65 + (idx % 26))!  // A, B, C, …
+        return "SS \(String(scalar))"
+    }
+
+    private var supersetColor: Color {
+        let palette: [Color] = [.purple, .pink, .indigo, .teal, .brown]
+        guard let idx = supersetGroupIndex else { return .purple }
+        return palette[idx % palette.count]
     }
 
     private func workingSetNumber(for set: ExerciseSet, in sets: [ExerciseSet]) -> Int {

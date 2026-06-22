@@ -13,6 +13,7 @@ DerivedData/
 
 # Swift Package Manager
 .build/
+.build_tmp/
 .swiftpm/
 
 # Personal input data (training plans, photos, notes)

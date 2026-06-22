@@ -30,11 +30,13 @@ struct WorkoutSummaryData: Identifiable {
 
         let exerciseSummaries = session.sortedExercises.map { exercise in
             let workingSets = exercise.sets.filter { !$0.isWarmup }
+            // Only checked-off sets count toward stats — a skipped (unchecked) set
+            // never contributes to volume, max weight, or PRs.
             let completedSets = workingSets.filter(\.isCompleted)
-            let maxWeight = workingSets.map(\.weight).max() ?? 0
-            let volume = exercise.sets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+            let maxWeight = completedSets.map(\.weight).max() ?? 0
+            let volume = completedSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
             let isPR = exercise.previousWeight.map { maxWeight > $0 } ?? false
-            let rpeValues = workingSets.compactMap(\.rpe)
+            let rpeValues = completedSets.compactMap(\.rpe)
             let avgRPE = rpeValues.isEmpty ? nil : rpeValues.reduce(0, +) / Double(rpeValues.count)
 
             return ExerciseSummary(

@@ -52,28 +52,29 @@ final class WorkoutViewModel {
 
         let session = WorkoutSession(gymName: gymName, workoutType: selectedWorkoutType)
 
-        // Load exercise list from previous completed session (carries forward renames/removals)
+        // The exercise *list* (which exercises, their order and machine) comes from
+        // the last matching gym + workout-type session, falling back to the template.
+        // The prefilled *values* for each exercise, however, come from the most recent
+        // time that exercise was performed at this gym — regardless of workout type.
+        let gymHistory = recentCompletedSessions(atGym: gymName)
         let previousExercises = fetchPreviousSession(gymName: gymName, workoutType: selectedWorkoutType)
 
         if let prevExercises = previousExercises, !prevExercises.isEmpty {
+            // Carry superset groupings forward: map each old group id to a fresh one
+            // so siblings stay linked in the new session.
+            var groupMap: [UUID: UUID] = [:]
             for (index, prev) in prevExercises.enumerated() {
-                let prevWeight = prev.sortedSets.map(\.weight).max()
-                let prevReps = prev.sortedSets.first(where: { $0.weight == prevWeight })?.reps
-                let exercise = LoggedExercise(
+                let exercise = buildExercise(
                     name: prev.name,
-                    order: index,
                     machineName: prev.machineName,
-                    previousWeight: prevWeight,
-                    previousReps: prevReps
+                    order: index,
+                    gymHistory: gymHistory,
+                    fallback: prev
                 )
-                for prevSet in prev.sortedSets {
-                    let set = ExerciseSet(
-                        setNumber: prevSet.setNumber,
-                        reps: prevSet.reps,
-                        weight: prevSet.weight,
-                        isWarmup: prevSet.isWarmup
-                    )
-                    exercise.sets.append(set)
+                if let oldGroup = prev.supersetGroupId {
+                    let newGroup = groupMap[oldGroup] ?? UUID()
+                    groupMap[oldGroup] = newGroup
+                    exercise.supersetGroupId = newGroup
                 }
                 exercise.session = session
                 session.exercises.append(exercise)
@@ -81,7 +82,14 @@ final class WorkoutViewModel {
         } else {
             let templates = TemplateProvider.templates(for: gymName, workoutType: selectedWorkoutType)
             for (index, template) in templates.enumerated() {
-                let exercise = template.toLoggedExercise(order: index)
+                let templateExercise = template.toLoggedExercise(order: index)
+                let exercise = buildExercise(
+                    name: templateExercise.name,
+                    machineName: templateExercise.machineName,
+                    order: index,
+                    gymHistory: gymHistory,
+                    fallback: templateExercise
+                )
                 exercise.session = session
                 session.exercises.append(exercise)
             }
@@ -100,6 +108,8 @@ final class WorkoutViewModel {
 
         let session = WorkoutSession(gymName: gymName, workoutType: selectedWorkoutType)
 
+        // Carry superset groupings forward from the copied session.
+        var groupMap: [UUID: UUID] = [:]
         for (index, prev) in sourceSession.sortedExercises.enumerated() {
             let prevWeight = prev.sortedSets.map(\.weight).max()
             let prevReps = prev.sortedSets.first(where: { $0.weight == prevWeight })?.reps
@@ -118,6 +128,11 @@ final class WorkoutViewModel {
                     isWarmup: prevSet.isWarmup
                 )
                 exercise.sets.append(set)
+            }
+            if let oldGroup = prev.supersetGroupId {
+                let newGroup = groupMap[oldGroup] ?? UUID()
+                groupMap[oldGroup] = newGroup
+                exercise.supersetGroupId = newGroup
             }
             exercise.session = session
             session.exercises.append(exercise)
@@ -184,6 +199,33 @@ final class WorkoutViewModel {
         autosave()
     }
 
+    /// Adds an exercise prefilled from a previous performance — copies its per-set
+    /// weights/reps/warmup flags and notes. Used when adding an exercise the user
+    /// has done before at this gym.
+    func addExercise(copyingFrom source: LoggedExercise) {
+        guard let session = currentSession else { return }
+        let order = session.exercises.count
+        let prevWeight = source.sortedSets.map(\.weight).max()
+        let prevReps = source.sortedSets.first(where: { $0.weight == prevWeight })?.reps
+        let exercise = LoggedExercise(
+            name: source.name,
+            order: order,
+            machineName: source.machineName,
+            notes: source.notes,
+            previousWeight: prevWeight,
+            previousReps: prevReps
+        )
+        for s in source.sortedSets {
+            exercise.sets.append(ExerciseSet(setNumber: s.setNumber, reps: s.reps, weight: s.weight, isWarmup: s.isWarmup))
+        }
+        if exercise.sets.isEmpty {
+            exercise.sets.append(ExerciseSet(setNumber: 1, reps: prevReps ?? 10, weight: prevWeight ?? 0))
+        }
+        exercise.session = session
+        session.exercises.append(exercise)
+        autosave()
+    }
+
     func removeExercise(_ exercise: LoggedExercise) {
         guard let context = modelContext, let session = currentSession else { return }
         let exerciseID = exercise.id
@@ -236,7 +278,32 @@ final class WorkoutViewModel {
         let groupId = exercise1.supersetGroupId ?? exercise2.supersetGroupId ?? UUID()
         exercise1.supersetGroupId = groupId
         exercise2.supersetGroupId = groupId
+        reorderSupersetsContiguous()
         autosave()
+    }
+
+    /// Reorders exercises so that all members of each superset group sit together.
+    /// A group is anchored at the position of its first-appearing member; the
+    /// relative order of everything else is preserved.
+    private func reorderSupersetsContiguous() {
+        guard let session = currentSession else { return }
+        let current = session.sortedExercises
+        var result: [LoggedExercise] = []
+        var emittedGroups = Set<UUID>()
+        for exercise in current {
+            if let groupId = exercise.supersetGroupId {
+                guard !emittedGroups.contains(groupId) else { continue }
+                emittedGroups.insert(groupId)
+                for member in current where member.supersetGroupId == groupId {
+                    result.append(member)
+                }
+            } else {
+                result.append(exercise)
+            }
+        }
+        for (index, exercise) in result.enumerated() {
+            exercise.order = index
+        }
     }
 
     func unlinkSuperset(_ exercise: LoggedExercise) {
@@ -362,6 +429,72 @@ final class WorkoutViewModel {
         autosave()
         currentSession = session
         isWorkoutActive = true
+    }
+
+    // MARK: - Last Performance Lookup (cross-workout, per gym)
+
+    /// All completed sessions at a gym, newest first.
+    private func recentCompletedSessions(atGym gymName: String) -> [WorkoutSession] {
+        guard let context = modelContext else { return [] }
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.gymName == gymName && $0.isCompleted == true },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    /// The most recent time an exercise (matched by name) was performed within the
+    /// given sessions, regardless of workout type. `sessions` must be newest-first.
+    private func lastPerformance(ofExerciseNamed name: String, in sessions: [WorkoutSession]) -> LoggedExercise? {
+        for session in sessions {
+            if let match = session.exercises.first(where: { $0.name == name }) {
+                return match
+            }
+        }
+        return nil
+    }
+
+    /// Public lookup of the most recent performance of an exercise at the currently
+    /// selected gym, regardless of workout type. Used when adding an exercise.
+    func lastPerformance(ofExerciseNamed name: String) -> LoggedExercise? {
+        let history = recentCompletedSessions(atGym: effectiveGymName)
+        return lastPerformance(ofExerciseNamed: name, in: history)
+    }
+
+    /// Builds a fresh LoggedExercise for a new session. Values (sets, weights, reps,
+    /// warmup flags, notes) are taken from the most recent performance of this
+    /// exercise at the gym; if there's none, `fallback` provides the defaults.
+    private func buildExercise(
+        name: String,
+        machineName: String,
+        order: Int,
+        gymHistory: [WorkoutSession],
+        fallback: LoggedExercise
+    ) -> LoggedExercise {
+        let source = lastPerformance(ofExerciseNamed: name, in: gymHistory) ?? fallback
+        let prevWeight = source.sortedSets.map(\.weight).max()
+        let prevReps = source.sortedSets.first(where: { $0.weight == prevWeight })?.reps
+        let exercise = LoggedExercise(
+            name: name,
+            order: order,
+            machineName: machineName.isEmpty ? source.machineName : machineName,
+            notes: source.notes,
+            previousWeight: prevWeight,
+            previousReps: prevReps
+        )
+        for prevSet in source.sortedSets {
+            let set = ExerciseSet(
+                setNumber: prevSet.setNumber,
+                reps: prevSet.reps,
+                weight: prevSet.weight,
+                isWarmup: prevSet.isWarmup
+            )
+            exercise.sets.append(set)
+        }
+        if exercise.sets.isEmpty {
+            exercise.sets.append(ExerciseSet(setNumber: 1, reps: prevReps ?? 10, weight: prevWeight ?? 0))
+        }
+        return exercise
     }
 
     // MARK: - Fetch Previous Session

@@ -6,9 +6,20 @@ struct BodyWeightView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \BodyWeightEntry.date, order: .reverse) private var entries: [BodyWeightEntry]
     @State private var showAddEntry = false
-    @State private var newWeight: Double = 85.0
+    @State private var newWeight: Double = 93.0
+    /// 0 means "not entered" — saved as nil so waist stays optional.
+    @State private var newWaist: Double = 0
     @State private var newDate = Date()
     @State private var newNotes = ""
+    @State private var chartMetric: BodyMetric = .weight
+
+    private enum BodyMetric: String, CaseIterable, Identifiable {
+        case weight = "Weight"
+        case waist = "Waist"
+        var id: String { rawValue }
+        var unit: String { self == .weight ? "kg" : "cm" }
+        var color: Color { self == .weight ? .orange : .teal }
+    }
 
     var body: some View {
         List {
@@ -23,23 +34,36 @@ struct BodyWeightView: View {
             }
 
             // Chart
+            let metricEntries = entries
+                .filter { metricValue($0) != nil }
+                .sorted { $0.date < $1.date }
             if entries.count >= 2 {
-                Section("Trend") {
-                    let sorted = entries.sorted { $0.date < $1.date }
-                    let weights = sorted.map(\.weight)
-                    let minW = (weights.min() ?? 0) - 1
-                    let maxW = (weights.max() ?? 100) + 1
-                    let movingAvg = movingAverage(sorted, window: 7)
+                Section {
+                    Picker("Metric", selection: $chartMetric) {
+                        ForEach(BodyMetric.allCases) { metric in
+                            Text(metric.rawValue).tag(metric)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .listRowSeparator(.hidden)
+
+                    if metricEntries.count >= 2 {
+                    let values = metricEntries.compactMap(metricValue)
+                    let minV = (values.min() ?? 0) - 1
+                    let maxV = (values.max() ?? 100) + 1
+                    let movingAvg = movingAverage(metricEntries, window: 7)
+                    let color = chartMetric.color
                     Chart {
-                        ForEach(sorted) { entry in
+                        ForEach(metricEntries) { entry in
+                            let v = metricValue(entry) ?? 0
                             AreaMark(
                                 x: .value("Date", entry.date),
-                                y: .value("Weight", entry.weight)
+                                y: .value(chartMetric.rawValue, v)
                             )
                             .interpolationMethod(.catmullRom)
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [.orange.opacity(0.2), .orange.opacity(0.02)],
+                                    colors: [color.opacity(0.2), color.opacity(0.02)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -47,26 +71,26 @@ struct BodyWeightView: View {
 
                             LineMark(
                                 x: .value("Date", entry.date),
-                                y: .value("Weight", entry.weight)
+                                y: .value(chartMetric.rawValue, v)
                             )
                             .interpolationMethod(.catmullRom)
-                            .foregroundStyle(.orange.opacity(0.5))
+                            .foregroundStyle(color.opacity(0.5))
                             .lineStyle(StrokeStyle(lineWidth: 1.5))
                             .symbol(.circle)
                             .symbolSize(20)
 
                             PointMark(
                                 x: .value("Date", entry.date),
-                                y: .value("Weight", entry.weight)
+                                y: .value(chartMetric.rawValue, v)
                             )
-                            .foregroundStyle(.orange.opacity(0.5))
+                            .foregroundStyle(color.opacity(0.5))
                             .symbolSize(15)
                         }
 
                         ForEach(movingAvg, id: \.date) { point in
                             LineMark(
                                 x: .value("Date", point.date),
-                                y: .value("Weight", point.weight),
+                                y: .value(chartMetric.rawValue, point.value),
                                 series: .value("Series", "7-day avg")
                             )
                             .interpolationMethod(.catmullRom)
@@ -74,13 +98,22 @@ struct BodyWeightView: View {
                             .lineStyle(StrokeStyle(lineWidth: 3))
                         }
                     }
-                    .chartYScale(domain: minW...maxW)
-                    .chartYAxisLabel("kg")
+                    .chartYScale(domain: minV...maxV)
+                    .chartYAxisLabel(chartMetric.unit)
                     .chartForegroundStyleScale([
-                        "Daily": Color.orange.opacity(0.5),
+                        "Daily": color.opacity(0.5),
                         "7-day avg": Color.blue
                     ])
                     .frame(height: 200)
+                    } else {
+                        Text("Not enough \(chartMetric.rawValue.lowercased()) entries yet")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 24)
+                    }
+                } header: {
+                    Text("Trend")
                 }
             }
 
@@ -91,6 +124,13 @@ struct BodyWeightView: View {
                         Text("\(latest.weight.formattedWeight) kg")
                             .font(.headline)
                             .monospacedDigit()
+                    }
+                    if let latestWaist = entries.first(where: { $0.waist != nil })?.waist {
+                        LabeledContent("Latest Waist") {
+                            Text("\(latestWaist.formattedWeight) cm")
+                                .font(.headline)
+                                .monospacedDigit()
+                        }
                     }
                     LabeledContent("Date") {
                         Text(latest.date, style: .date)
@@ -124,16 +164,25 @@ struct BodyWeightView: View {
                                 }
                             }
                             Spacer()
-                            Text("\(entry.weight.formattedWeight) kg")
-                                .font(.subheadline.bold())
-                                .monospacedDigit()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(entry.weight.formattedWeight) kg")
+                                    .font(.subheadline.bold())
+                                    .monospacedDigit()
+                                if let waist = entry.waist {
+                                    Text("\(waist.formattedWeight) cm")
+                                        .font(.caption)
+                                        .foregroundStyle(Color.teal)
+                                        .monospacedDigit()
+                                }
+                            }
                         }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel({
                             let formatter = DateFormatter()
                             formatter.dateStyle = .long
                             formatter.timeStyle = .none
-                            return "Weight \(entry.weight.formattedWeight) kg on \(formatter.string(from: entry.date))"
+                            let waistText = entry.waist.map { ", waist \($0.formattedWeight) cm" } ?? ""
+                            return "Weight \(entry.weight.formattedWeight) kg\(waistText) on \(formatter.string(from: entry.date))"
                         }())
                     }
                     .onDelete(perform: deleteEntries)
@@ -154,6 +203,16 @@ struct BodyWeightView: View {
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 80)
                             Text("kg")
+                                .foregroundStyle(.secondary)
+                        }
+                        HStack {
+                            Text("Waist")
+                            Spacer()
+                            TextField("optional", value: $newWaist, format: .number)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                            Text("cm")
                                 .foregroundStyle(.secondary)
                         }
                         DatePicker("Date", selection: $newDate, displayedComponents: .date)
@@ -178,7 +237,7 @@ struct BodyWeightView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            let entry = BodyWeightEntry(date: newDate, weight: newWeight, notes: newNotes)
+                            let entry = BodyWeightEntry(date: newDate, weight: newWeight, waist: newWaist > 0 ? newWaist : nil, notes: newNotes)
                             modelContext.insert(entry)
                             try? modelContext.save()
                             newNotes = ""
@@ -193,22 +252,38 @@ struct BodyWeightView: View {
             if let latest = entries.first {
                 newWeight = latest.weight
             }
+            if let latestWaist = entries.first(where: { $0.waist != nil })?.waist {
+                newWaist = latestWaist
+            }
+        }
+    }
+
+    /// The value of the currently selected chart metric for an entry, or nil
+    /// when the entry doesn't track that metric (e.g. an old entry without waist).
+    private func metricValue(_ entry: BodyWeightEntry) -> Double? {
+        switch chartMetric {
+        case .weight: return entry.weight
+        case .waist: return entry.waist
         }
     }
 
     private struct MovingAvgPoint {
         let date: Date
-        let weight: Double
+        let value: Double
     }
 
+    /// Moving average over the selected metric. `sorted` must already be filtered
+    /// to entries that have a value for the current metric and sorted ascending.
     private func movingAverage(_ sorted: [BodyWeightEntry], window: Int) -> [MovingAvgPoint] {
         guard sorted.count >= 2 else { return [] }
         var result: [MovingAvgPoint] = []
         for (i, entry) in sorted.enumerated() {
             let windowStart = Calendar.current.date(byAdding: .day, value: -(window - 1), to: entry.date)!
             let windowEntries = sorted[0...i].filter { $0.date >= windowStart }
-            let avg = windowEntries.map(\.weight).reduce(0, +) / Double(windowEntries.count)
-            result.append(MovingAvgPoint(date: entry.date, weight: avg))
+            let vals = windowEntries.compactMap(metricValue)
+            guard !vals.isEmpty else { continue }
+            let avg = vals.reduce(0, +) / Double(vals.count)
+            result.append(MovingAvgPoint(date: entry.date, value: avg))
         }
         return result
     }
